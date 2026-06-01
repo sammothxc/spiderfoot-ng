@@ -1,68 +1,46 @@
-<a href="https://www.spiderfoot.net/r.php?u=aHR0cHM6Ly93d3cuc3BpZGVyZm9vdC5uZXQv&s=os_gh"><img src="https://www.spiderfoot.net/wp-content/themes/spiderfoot/img/spiderfoot-wide.png"></a>
+# spiderfoot-ng
+
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Python Version](https://img.shields.io/badge/python-3.9+-green)](https://www.python.org)
+[![Tests](https://github.com/sammothxc/spiderfoot-ng/actions/workflows/tests.yaml/badge.svg)](https://github.com/sammothxc/spiderfoot-ng/actions/workflows/tests.yaml)
+[![Docker](https://github.com/sammothxc/spiderfoot-ng/actions/workflows/docker-publish.yml/badge.svg)](https://github.com/sammothxc/spiderfoot-ng/actions/workflows/docker-publish.yml)
+[![CodeQL](https://github.com/sammothxc/spiderfoot-ng/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/sammothxc/spiderfoot-ng/actions/workflows/codeql-analysis.yml)
+[![Last Commit](https://img.shields.io/github/last-commit/sammothxc/spiderfoot-ng)](https://github.com/sammothxc/spiderfoot-ng/commits/master)
+
+**spiderfoot-ng** is an open-source intelligence (OSINT) automation tool. It integrates with hundreds of data sources and combines them with analysis modules to make the resulting data easy to navigate.
+
+It has an embedded web server with a clean, intuitive web UI, and can also be driven entirely from the command line. It's written in **Python 3** and **MIT-licensed**.
+
+> **About this fork**
+> spiderfoot-ng is a community-maintained fork of [smicallef/spiderfoot](https://github.com/smicallef/spiderfoot), focused on keeping the project alive with up-to-date dependencies and modern container delivery. We deliberately ship a single slim Docker image rather than the bundled "full" image, see [A note on the Docker image](#a-note-on-the-docker-image) below.
 
 
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/smicallef/spiderfoot/master/LICENSE)
-[![Python Version](https://img.shields.io/badge/python-3.7+-green)](https://www.python.org)
-[![Stable Release](https://img.shields.io/badge/version-4.0-blue.svg)](https://github.com/smicallef/spiderfoot/releases/tag/v4.0)
-[![CI status](https://github.com/smicallef/spiderfoot/workflows/Tests/badge.svg)](https://github.com/smicallef/spiderfoot/actions?query=workflow%3A"Tests")
-[![Last Commit](https://img.shields.io/github/last-commit/smicallef/spiderfoot)](https://github.com/smicallef/spiderfoot/commits/master)
-[![Codecov](https://codecov.io/github/smicallef/spiderfoot/coverage.svg)](https://codecov.io/github/smicallef/spiderfoot)
-[![Twitter Follow](https://img.shields.io/twitter/follow/spiderfoot?label=follow&style=social)](https://twitter.com/spiderfoot)
-[![Discord](https://img.shields.io/discord/770524432464216074)](https://discord.gg/vyvztrG)
+## Features
 
-**SpiderFoot** is an open source intelligence (OSINT) automation tool. It integrates with just about every data source available and utilises a range of methods for data analysis, making that data easy to navigate. 
-
-SpiderFoot has an embedded web-server for providing a clean and intuitive web-based interface but can also be used completely via the command-line.  It's written in **Python 3** and **MIT-licensed**.
-
-<img src="https://www.spiderfoot.net/wp-content/uploads/2022/04/opensource-screenshot-v4.png" />
-
-### FEATURES
-
-- Web based UI or CLI
-- Over 200 modules (see below)
-- Python 3.7+
+- Web-based UI or CLI
+- Over 200 modules (see the [modules table](#modules--integrations) below)
+- Python 3.9+
 - YAML-configurable [correlation engine](/correlations/README.md) with [37 pre-defined rules](/correlations)
-- CSV/JSON/GEXF export
+- CSV / JSON / GEXF export
 - API key export/import
 - SQLite back-end for custom querying
 - Highly configurable
-- Fully documented
 - Visualisations
 - TOR integration for dark web searching
-- Dockerfile for Docker-based deployments (single slim image — see note below)
-- Can call other tools like DNSTwist, Whatweb, Nmap and CMSeeK
-- [Actively developed since 2012!](https://medium.com/@micallst/lessons-learned-from-my-10-year-open-source-project-4a4c8c2b4f64)
+- Single slim Docker image published to `ghcr.io/sammothxc/spiderfoot-ng`
+- Can call other CLI tools like DNSTwist, WhatWeb, Nmap, and CMSeeK if installed on the host
 
-### A NOTE ON THE DOCKER IMAGE
+## A Note on the Docker Image
 
 spiderfoot-ng ships a single slim image (`ghcr.io/sammothxc/spiderfoot-ng:latest`). The original SpiderFoot project shipped a separate "full" image bundling Nuclei, WhatWeb, dnstwist, CMSeeK, TruffleHog and other third-party CLI tools — we don't. The maintenance burden of tracking ~12 unrelated upstream projects was disproportionate to the benefit, and most users only use a small subset of the OSINT modules.
 
 If you need those tools, install them on your host (or in sidecar containers) and configure their binary paths in the SpiderFoot UI under each module's settings. The `archived/full-image` git tag preserves the last working configuration if you want to adapt it.
 
-### WANT MORE?
+## Uses
 
-Need more from SpiderFoot? Check out [SpiderFoot HX](https://www.spiderfoot.net/hx) for:
-- 100% Cloud-based and managed for you
-- Attack Surface Monitoring with change notifications by email, REST and Slack
-- Multiple targets per scan
-- Multi-user collaboration
-- Authenticated and 2FA
-- Investigations
-- Customer support
-- Third party tools pre-installed & configured
-- Drive it with a fully RESTful API
-- TOR integration built-in
-- Screenshotting
-- Bring your own Python SpiderFoot modules
-- Feed scan data to Splunk, ElasticSearch and REST endpoints
+spiderfoot-ng can be used offensively (e.g. in a red team exercise or penetration test) for reconnaissance of a target, or defensively to gather information about what your organisation might have exposed on the Internet.
 
-See the full set of differences between SpiderFoot HX and the open source version [here](https://www.spiderfoot.net/open-source-vs-hx/).
-
-### USES
-
-SpiderFoot can be used offensively (e.g. in a red team exercise or penetration test) for reconnaissance of your target or defensively to gather information about what you or your organisation might have exposed over the Internet.
-
-You can target the following entities in a SpiderFoot scan:
+Scan targets can include:
 
  - IP address
  - Domain/sub-domain name
@@ -75,63 +53,70 @@ You can target the following entities in a SpiderFoot scan:
  - Person's name
  - Bitcoin address
  
-SpiderFoot's 200+ modules feed each other in a publisher/subscriber model to ensure maximum data extraction to do things like:
+The 200+ modules feed each other in a publisher/subscriber model to do things like:
 
-- [Host/sub-domain/TLD enumeration/extraction](https://asciinema.org/a/295912)
-- [Email address, phone number and human name extraction](https://asciinema.org/a/295947)
+- [Host / sub-domain / TLD enumeration](https://asciinema.org/a/295912)
+- [Email address, phone number, and human name extraction](https://asciinema.org/a/295947)
 - [Bitcoin and Ethereum address extraction](https://asciinema.org/a/295957)
-- [Check for susceptibility to sub-domain hijacking](https://asciinema.org/a/344377)
+- [Sub-domain hijacking susceptibility checks](https://asciinema.org/a/344377)
 - DNS zone transfers
-- [Threat intelligence and Blacklist queries](https://asciinema.org/a/295949)
+- [Threat intelligence and blacklist queries](https://asciinema.org/a/295949)
 - API integration with [SHODAN](https://asciinema.org/a/127601), [HaveIBeenPwned](https://asciinema.org/a/128731), [GreyNoise](https://asciinema.org/a/295943), AlienVault, SecurityTrails, etc.
 - [Social media account enumeration](https://asciinema.org/a/295923)
-- [S3/Azure/Digitalocean bucket enumeration/scraping](https://asciinema.org/a/295941)
+- [S3 / Azure / DigitalOcean bucket enumeration](https://asciinema.org/a/295941)
 - IP geo-location
-- Web scraping, web content analysis
-- [Image, document and binary file meta data analysis](https://asciinema.org/a/296274)
+- Web scraping and content analysis
+- [Image, document, and binary metadata analysis](https://asciinema.org/a/296274)
 - Dark web searches
 - [Port scanning and banner grabbing](https://asciinema.org/a/295939)
 - [Data breach searches](https://asciinema.org/a/296145)
-- So much more...
 
-### INSTALLING & RUNNING
+## Installing and Running
 
-To install and run SpiderFoot, you need at least Python 3.7 and a number of Python libraries which you can install with `pip`. We recommend you install a packaged release since master will often have bleeding edge features and modules that aren't fully tested.
+### Docker (recommended)
 
-#### Stable build (packaged release):
-
-```
- wget https://github.com/smicallef/spiderfoot/archive/v4.0.tar.gz
- tar zxvf v4.0.tar.gz
- cd spiderfoot-4.0
- pip3 install -r requirements.txt
- python3 ./sf.py -l 127.0.0.1:5001
+```sh
+docker run -p 5001:5001 -v ./data:/var/lib/spiderfoot ghcr.io/sammothxc/spiderfoot-ng:latest
 ```
 
-#### Development build (cloning git master branch):
+Then open `http://localhost:5001`.
 
+For Docker Compose, Dockge, and other stack managers:
+
+```yaml
+services:
+  spiderfoot:
+    image: ghcr.io/sammothxc/spiderfoot-ng:latest
+    container_name: spiderfoot
+    ports:
+      - "5001:5001"
+    volumes:
+      - ./data:/var/lib/spiderfoot
+    restart: unless-stopped
 ```
- git clone https://github.com/smicallef/spiderfoot.git
- cd spiderfoot
- pip3 install -r requirements.txt
- python3 ./sf.py -l 127.0.0.1:5001
+
+If `./data` is owned by your host user, you may need to `chown -R 1000:1000 ./data` so the container's `spiderfoot` user can write to it.
+
+### From source
+
+```sh
+git clone https://github.com/sammothxc/spiderfoot-ng.git
+cd spiderfoot-ng
+pip3 install -r requirements.txt
+python3 ./sf.py -l 127.0.0.1:5001
 ```
 
-Check out the [documentation](https://www.spiderfoot.net/documentation) and our [asciinema videos](https://asciinema.org/~spiderfoot) for more tutorials.
+Requires Python 3.9 or newer.
 
-### COMMUNITY
+## Writing Correlation Rules
 
-Whether you're a contributor, user or just curious about SpiderFoot and OSINT in general, we'd love to have you join our community! SpiderFoot now has a [Discord server](https://discord.gg/vyvztrG) for seeking help from the community, requesting features or just general OSINT chit-chat.
+There's a comprehensive write-up of the correlation rule-set [here](/correlations/README.md).
 
-### WRITING CORRELATION RULES
+Also take a look at the [template.yaml](/correlations/template.yaml) file for a walk-through. The existing [37 rules](/correlations) are quite readable and good as starting points.
 
-We have a comprehensive write-up and reference of the correlation rule-set introduced in SpiderFoot 4.0 [here](/correlations/README.md).
+## Modules and Integrations
 
-Also take a look at the [template.yaml](/correlations/template.yaml) file for a walk through. The existing [37 rules](/correlations) are also quite readable and good as starting points for additional rules.
-
-### MODULES / INTEGRATIONS
-
-SpiderFoot has over 200 modules, most of which *don't require API keys*, and many of those that do require API keys *have a free tier*.
+spiderfoot-ng has over 200 modules, most of which *don't require API keys*, and many of those that do have a free tier.
 
 | Name     | Description | Type   |
 |:---------| :-----------|:-------|
@@ -322,19 +307,19 @@ Subdomain Takeover Checker|Check if affiliated subdomains are vulnerable to take
 [ThreatFox](https://threatfox.abuse.ch)|Check if an IP address is malicious according to ThreatFox.|Free API
 [ThreatMiner](https://www.threatminer.org/)|Obtain information from ThreatMiner's database for passive DNS and threat intelligence.|Free API
 TLD Searcher|Search all Internet TLDs for domains with the same name as the target (this can be very slow.)|Internal
-[Tool - CMSeeK]([https://github.com/Tuhinshubhra/CMSeeK](https://github.com/Tuhinshubhra/CMSeeK))|Identify what Content Management System (CMS) might be used.|Tool
-[Tool - DNSTwist]([https://github.com/elceef/dnstwist](https://github.com/elceef/dnstwist))|Identify bit-squatting, typo and other similar domains to the target using a local DNSTwist installation.|Tool
-[Tool - nbtscan]([http://www.unixwiz.net/tools/nbtscan.html](http://www.unixwiz.net/tools/nbtscan.html))|Scans for open NETBIOS nameservers on your target's network.|Tool
-[Tool - Nmap]([https://nmap.org/](https://nmap.org/))|Identify what Operating System might be used.|Tool
-[Tool - Nuclei]([https://nuclei.projectdiscovery.io/](https://nuclei.projectdiscovery.io/))|Fast and customisable vulnerability scanner.|Tool
-[Tool - onesixtyone]([https://github.com/trailofbits/onesixtyone](https://github.com/trailofbits/onesixtyone))|Fast scanner to find publicly exposed SNMP services.|Tool
-[Tool - Retire.js]([http://retirejs.github.io/retire.js/](http://retirejs.github.io/retire.js/))|Scanner detecting the use of JavaScript libraries with known vulnerabilities|Tool
-[Tool - snallygaster]([https://github.com/hannob/snallygaster](https://github.com/hannob/snallygaster))|Finds file leaks and other security problems on HTTP servers.|Tool
-[Tool - testssl.sh]([https://testssl.sh](https://testssl.sh))|Identify various TLS/SSL weaknesses, including Heartbleed, CRIME and ROBOT.|Tool
-[Tool - TruffleHog]([https://github.com/trufflesecurity/truffleHog](https://github.com/trufflesecurity/truffleHog))|Searches through git repositories for high entropy strings and secrets, digging deep into commit history.|Tool
-[Tool - WAFW00F]([https://github.com/EnableSecurity/wafw00f](https://github.com/EnableSecurity/wafw00f))|Identify what web application firewall (WAF) is in use on the specified website.|Tool
-[Tool - Wappalyzer]([https://www.wappalyzer.com/](https://www.wappalyzer.com/))|Wappalyzer indentifies technologies on websites.|Tool
-[Tool - WhatWeb]([https://github.com/urbanadventurer/whatweb](https://github.com/urbanadventurer/whatweb))|Identify what software is in use on the specified website.|Tool
+[Tool - CMSeeK](https://github.com/Tuhinshubhra/CMSeeK)|Identify what Content Management System (CMS) might be used.|Tool
+[Tool - DNSTwist](https://github.com/elceef/dnstwist)|Identify bit-squatting, typo and other similar domains to the target using a local DNSTwist installation.|Tool
+[Tool - nbtscan](http://www.unixwiz.net/tools/nbtscan.html)|Scans for open NETBIOS nameservers on your target's network.|Tool
+[Tool - Nmap](https://nmap.org/)|Identify what Operating System might be used.|Tool
+[Tool - Nuclei](https://nuclei.projectdiscovery.io/)|Fast and customisable vulnerability scanner.|Tool
+[Tool - onesixtyone](https://github.com/trailofbits/onesixtyone)|Fast scanner to find publicly exposed SNMP services.|Tool
+[Tool - Retire.js](http://retirejs.github.io/retire.js/)|Scanner detecting the use of JavaScript libraries with known vulnerabilities|Tool
+[Tool - snallygaster](https://github.com/hannob/snallygaster)|Finds file leaks and other security problems on HTTP servers.|Tool
+[Tool - testssl.sh](https://testssl.sh)|Identify various TLS/SSL weaknesses, including Heartbleed, CRIME and ROBOT.|Tool
+[Tool - TruffleHog](https://github.com/trufflesecurity/truffleHog)|Searches through git repositories for high entropy strings and secrets, digging deep into commit history.|Tool
+[Tool - WAFW00F](https://github.com/EnableSecurity/wafw00f)|Identify what web application firewall (WAF) is in use on the specified website.|Tool
+[Tool - Wappalyzer](https://www.wappalyzer.com/)|Wappalyzer indentifies technologies on websites.|Tool
+[Tool - WhatWeb](https://github.com/urbanadventurer/whatweb)|Identify what software is in use on the specified website.|Tool
 [TOR Exit Nodes](https://metrics.torproject.org/)|Check if an IP adddress or netblock appears on the Tor Metrics exit node list.|Free API
 [TORCH](https://torchsearch.wordpress.com/)|Search Tor 'TORCH' search engine for mentions of the target domain.|Free API
 [Trashpanda](https://got-hacked.wtf)|Queries Trashpanda to gather intelligence about mentions of target in pastesites|Tiered API
@@ -365,8 +350,10 @@ Whois|Perform a WHOIS look-up on domain names and owned netblocks.|Internal
 [ZoneFile.io](https://zonefiles.io)|Search ZoneFiles.io Domain query API for domain information.|Tiered API
 [Zone-H Defacement Check](https://zone-h.org/)|Check if a hostname/domain appears on the zone-h.org 'special defacements' RSS feed.|Free API
 
-### DOCUMENTATION
+## Contributing
 
-Read more at the [project website](https://www.spiderfoot.net/r.php?u=aHR0cHM6Ly93d3cuc3BpZGVyZm9vdC5uZXQv&s=os_gh), including more complete documentation, blog posts with tutorials/guides, plus information about [SpiderFoot HX](https://www.spiderfoot.net/r.php?u=aHR0cHM6Ly93d3cuc3BpZGVyZm9vdC5uZXQvaHgvCg==&s=os_gh).
+Pull requests, issues, and module additions are welcome. If you're fixing a bug or modernizing a dependency, please include a brief explanation of the root cause in the PR description.
 
-Latest updates announced on [Twitter](https://twitter.com/spiderfoot).
+## License
+
+MIT; see [LICENSE](LICENSE). spiderfoot-ng is a fork of [smicallef/spiderfoot](https://github.com/smicallef/spiderfoot); the original copyright is preserved per the MIT terms.
