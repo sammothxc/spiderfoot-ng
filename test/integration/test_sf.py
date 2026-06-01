@@ -35,13 +35,18 @@ class TestSf(unittest.TestCase):
         "sfp_webanalytics",
     ]
 
-    def execute(self, command):
+    def execute(self, command, timeout=30):
         proc = subprocess.Popen(
             command,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
         )
-        out, err = proc.communicate()
+        try:
+            out, err = proc.communicate(timeout=timeout)
+        except subprocess.TimeoutExpired:
+            proc.kill()
+            out, err = proc.communicate()
+            raise
         return out, err, proc.returncode
 
     def test_no_args_should_print_arg_l_required(self):
