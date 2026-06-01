@@ -6,9 +6,6 @@ version: "3"
 # Dev environment (code directory mapped into container):
 #     $ docker-compose -f docker-compose.yml -f docker-compose-dev.yml up
 #
-# Full image (all CLI tools installed):
-#     $ docker-compose -f docker-compose.yml -f docker-compose-full.yml up
-#
 # Spiderfoot data resides in a Docker volume
 #
 #     $ ls -lh /var/lib/docker/volumes/spiderfoot_spiderfoot-data/_data

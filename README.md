@@ -29,9 +29,15 @@ SpiderFoot has an embedded web-server for providing a clean and intuitive web-ba
 - Fully documented
 - Visualisations
 - TOR integration for dark web searching
-- Dockerfile for Docker-based deployments
+- Dockerfile for Docker-based deployments (single slim image — see note below)
 - Can call other tools like DNSTwist, Whatweb, Nmap and CMSeeK
 - [Actively developed since 2012!](https://medium.com/@micallst/lessons-learned-from-my-10-year-open-source-project-4a4c8c2b4f64)
+
+### A NOTE ON THE DOCKER IMAGE
+
+spiderfoot-ng ships a single slim image (`ghcr.io/sammothxc/spiderfoot-ng:latest`). The original SpiderFoot project shipped a separate "full" image bundling Nuclei, WhatWeb, dnstwist, CMSeeK, TruffleHog and other third-party CLI tools — we don't. The maintenance burden of tracking ~12 unrelated upstream projects was disproportionate to the benefit, and most users only use a small subset of the OSINT modules.
+
+If you need those tools, install them on your host (or in sidecar containers) and configure their binary paths in the SpiderFoot UI under each module's settings. The `archived/full-image` git tag preserves the last working configuration if you want to adapt it.
 
 ### WANT MORE?
 
