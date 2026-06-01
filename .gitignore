@@ -6,7 +6,7 @@
 passwd
 spiderfoot.crt
 spiderfoot.key
-
+logs
 spiderfoot/static/node_modules/*
 
 spiderfoot/static/node_modules/alertifyjs/*
