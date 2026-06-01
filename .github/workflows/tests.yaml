@@ -2,23 +2,24 @@ name: Tests
 
 on:
   push:
-    branches: master
+    branches: [master]
   pull_request:
-    branches: master
+    branches: [master]
 
 jobs:
   build:
 
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
-        python-version: ["3.7", "3.8", "3.9", "3.10"]
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
         os: [ubuntu-latest, macos-latest]
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
@@ -32,8 +33,4 @@ jobs:
           flake8 . --count --show-source --statistics
       - name: Test with pytest
         run: |
-          python -m pytest -n auto --dist loadfile --ignore=test/integration/modules/ --durations=5 --cov-report term --cov=. .
-      - uses: codecov/codecov-action@v1
-        with:
-          fail_ci_if_error: false
-          verbose: true
+          python -m pytest -n auto --dist loadfile --ignore=test/integration/modules/ --durations=5 .
