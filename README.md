@@ -108,6 +108,22 @@ python3 ./sf.py -l 127.0.0.1:5001
 
 Requires Python 3.10 or newer.
 
+## Releasing
+
+The version number lives in `spiderfoot/__version__.py` (canonical) and is mirrored
+to the `VERSION` file. Both are updated automatically — never edit them by hand.
+
+To cut a release, run one command (installs with `pip install -r test/requirements.txt`):
+
+```sh
+bump-my-version bump patch   # bug fixes:        4.0.2 -> 4.0.3
+bump-my-version bump minor   # new features:     4.0.2 -> 4.1.0
+bump-my-version bump major   # breaking changes: 4.0.2 -> 5.0.0
+```
+
+This updates the version files, commits, and creates a `vX.Y.Z` git tag. Push the
+tag (`git push --follow-tags`) to trigger the Docker image publish workflow.
+
 ## Writing Correlation Rules
 
 There's a comprehensive write-up of the correlation rule-set [here](/correlations/README.md).
