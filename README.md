@@ -1,7 +1,7 @@
 # spiderfoot-ng
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Python Version](https://img.shields.io/badge/python-3.9+-green)](https://www.python.org)
+[![Python Version](https://img.shields.io/badge/python-3.10+-green)](https://www.python.org)
 [![Tests](https://github.com/sammothxc/spiderfoot-ng/actions/workflows/tests.yaml/badge.svg)](https://github.com/sammothxc/spiderfoot-ng/actions/workflows/tests.yaml)
 [![Docker](https://github.com/sammothxc/spiderfoot-ng/actions/workflows/docker-publish.yml/badge.svg)](https://github.com/sammothxc/spiderfoot-ng/actions/workflows/docker-publish.yml)
 [![CodeQL](https://github.com/sammothxc/spiderfoot-ng/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/sammothxc/spiderfoot-ng/actions/workflows/codeql-analysis.yml)
@@ -19,7 +19,7 @@ It has an embedded web server with a clean, intuitive web UI, and can also be dr
 
 - Web-based UI or CLI
 - Over 200 modules (see the [modules table](#modules--integrations) below)
-- Python 3.9+
+- Python 3.10+
 - YAML-configurable [correlation engine](/correlations/README.md) with [37 pre-defined rules](/correlations)
 - CSV / JSON / GEXF export
 - API key export/import
@@ -106,7 +106,7 @@ pip3 install -r requirements.txt
 python3 ./sf.py -l 127.0.0.1:5001
 ```
 
-Requires Python 3.9 or newer.
+Requires Python 3.10 or newer.
 
 ## Writing Correlation Rules
 
