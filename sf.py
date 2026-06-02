@@ -595,9 +595,6 @@ def handle_abort(signal, frame) -> None:
     """
     log = logging.getLogger(f"spiderfoot.{__name__}")
 
-    global dbh
-    global scanId
-
     if scanId and dbh:
         log.info(f"Aborting scan [{scanId}] ...")
         dbh.scanInstanceSet(scanId, None, None, "ABORTED")

@@ -232,7 +232,7 @@ class SpiderFootCli(cmd.Cmd):
         out = list()
         # Get the column titles
         maxsize = dict()
-        if type(data[0]) == dict:
+        if isinstance(data[0], dict):
             cols = list(data[0].keys())
         else:
             # for lists, use the index numbers as titles
@@ -250,12 +250,12 @@ class SpiderFootCli(cmd.Cmd):
         # Find the maximum column sizes
         for r in data:
             for i, c in enumerate(r):
-                if type(r) == list:
+                if isinstance(r, list):
                     # we have  list index
                     cn = str(i)
-                    if type(c) == int:
+                    if isinstance(c, int):
                         v = str(c)
-                    if type(c) == str:
+                    if isinstance(c, str):
                         v = c
                 else:
                     # we have a dict key
@@ -1246,7 +1246,7 @@ class SpiderFootCli(cmd.Cmd):
                     self.dprint(f"{k} = {c}", plain=True)
 
             for k in sorted(serverconfig.keys()):
-                if type(serverconfig[k]) == list:
+                if isinstance(serverconfig[k], list):
                     serverconfig[k] = ','.join(serverconfig[k])
                 if not cfg:
                     output.append({'opt': k, 'val': str(serverconfig[k])})
@@ -1270,7 +1270,7 @@ class SpiderFootCli(cmd.Cmd):
             for k in serverconfig:
                 if k == cfg:
                     serverconfig[k] = val
-                    if type(val) == str:
+                    if isinstance(val, str):
                         if val.lower() == "true":
                             serverconfig[k] = "1"
                         if val.lower() == "false":
@@ -1284,18 +1284,18 @@ class SpiderFootCli(cmd.Cmd):
             # Sanitize the data before sending it to the server
             for k in serverconfig:
                 optstr = ":".join(k.split(".")[1:])
-                if type(serverconfig[k]) == bool:
+                if isinstance(serverconfig[k], bool):
                     if serverconfig[k]:
                         confdata[optstr] = "1"
                     else:
                         confdata[optstr] = "0"
-                if type(serverconfig[k]) == list:
+                if isinstance(serverconfig[k], list):
                     # If set by the user, it must already be a
                     # string, not a list
                     confdata[optstr] = ','.join(serverconfig[k])
-                if type(serverconfig[k]) == int:
+                if isinstance(serverconfig[k], int) and not isinstance(serverconfig[k], bool):
                     confdata[optstr] = str(serverconfig[k])
-                if type(serverconfig[k]) == str:
+                if isinstance(serverconfig[k], str):
                     confdata[optstr] = serverconfig[k]
 
             self.ddprint(str(confdata))

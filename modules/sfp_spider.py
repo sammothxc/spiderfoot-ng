@@ -243,7 +243,7 @@ class sfp_spider(SpiderFootPlugin):
         else:
             utype = "LINKED_URL_EXTERNAL"
 
-        if type(url) != str:
+        if not isinstance(url, str):
             url = str(url, "utf-8", errors='replace')
         event = SpiderFootEvent(utype, url, self.__name__, parentEvent)
         self.notifyListeners(event)

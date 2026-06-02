@@ -224,7 +224,7 @@ class SpiderFootEvent():
             ValueError: module value was invalid
         """
         if not isinstance(module, str):
-            raise TypeError(f"module is {type(module )}; expected str()")
+            raise TypeError(f"module is {type(module)}; expected str()")
 
         if not module and self.eventType != "ROOT":
             raise ValueError("module is empty")
