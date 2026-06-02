@@ -235,7 +235,11 @@ class ThreadPoolWorker(threading.Thread):
         self.busy = False
         self.stop = False
 
-        super().__init__(name=name)
+        # Daemonise workers so a pool that is never explicitly shut down (or
+        # whose workers get orphaned, e.g. when map() restarts the pool) cannot
+        # block interpreter shutdown. Without this the process hangs at exit
+        # once tests run in-process rather than in xdist worker subprocesses.
+        super().__init__(name=name, daemon=True)
 
     def run(self) -> None:
         # Round-robin through each module's input queue
