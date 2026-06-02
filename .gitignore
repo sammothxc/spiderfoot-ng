@@ -77,6 +77,18 @@ spiderfoot/static/node_modules/d3/*
 !spiderfoot/static/node_modules/d3/
 !spiderfoot/static/node_modules/d3/d3.min.js
 
+spiderfoot/static/node_modules/cytoscape/*
+spiderfoot/static/node_modules/cytoscape/dist/*
+
+!spiderfoot/static/node_modules/cytoscape/
+!spiderfoot/static/node_modules/cytoscape/dist/
+!spiderfoot/static/node_modules/cytoscape/dist/cytoscape.min.js
+
+spiderfoot/static/node_modules/cytoscape-fcose/*
+
+!spiderfoot/static/node_modules/cytoscape-fcose/
+!spiderfoot/static/node_modules/cytoscape-fcose/cytoscape-fcose.js
+
 # Compiled source #
 ###################
 __pycache__/

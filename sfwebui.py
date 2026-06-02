@@ -687,7 +687,16 @@ class SpiderFootWebUi:
         root = scan[1]
 
         if gexf == "0":
-            return SpiderFootHelpers.buildGraphJson([root], data)
+            cherrypy.response.headers['Content-Type'] = "application/json; charset=utf-8"
+            # buildGraphJson raises if there is no graphable data yet (e.g. early in
+            # a running scan, or a transient empty read); fall back to an empty graph
+            # so the UI can poll for live updates and render the "insufficient data"
+            # message instead of failing. CherryPy requires bytes, so encode.
+            try:
+                graph_json = SpiderFootHelpers.buildGraphJson([root], data)
+            except (ValueError, TypeError):
+                graph_json = json.dumps({"nodes": [], "edges": []})
+            return graph_json.encode('utf-8')
 
         if not scan_name:
             fname = "SpiderFoot.gexf"
