@@ -974,6 +974,7 @@ class SpiderFoot:
         # disabled deliberately. We still use an explicit context to negotiate
         # a modern TLS version rather than relying on insecure defaults.
         context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+        context.minimum_version = ssl.TLSVersion.TLS1_2
         context.check_hostname = False
         context.verify_mode = ssl.CERT_NONE  # noqa: DUO122
         sock = context.wrap_socket(s, server_hostname=host)
