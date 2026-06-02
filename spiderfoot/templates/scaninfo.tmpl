@@ -254,9 +254,36 @@
                     maxNodeSize: 5
                 });
                 sigma.plugins.dragNodes(s, s.renderers[0])
+                s.bind('clickNode', function(e) {
+                    var name = e.data.node.label;
+                    if (name == null) return;
+                    copyToClipboard(String(name));
+                });
                 s.refresh()
                 $("#loader").hide();
             });
+        }
+
+        function copyToClipboard(text) {
+            var done = function() { alertify.success("Copied: " + text); };
+            var fail = function() { alertify.error("Failed to copy to clipboard."); };
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(text).then(done, fail);
+                return;
+            }
+            // Fallback for non-secure (plain http) contexts.
+            var ta = document.createElement("textarea");
+            ta.value = text;
+            ta.style.position = "fixed";
+            ta.style.opacity = "0";
+            document.body.appendChild(ta);
+            ta.select();
+            try {
+                document.execCommand("copy") ? done() : fail();
+            } catch (err) {
+                fail();
+            }
+            document.body.removeChild(ta);
         }
 
         function vizUpdate(method) {
