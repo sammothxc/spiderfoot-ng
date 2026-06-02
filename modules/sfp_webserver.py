@@ -123,8 +123,17 @@ class sfp_webserver(SpiderFootPlugin):
         if cookies and 'JSESSIONID' in cookies:
             tech.append("Java/JSP")
 
-        if cookies and 'ASP.NET' in cookies:
-            tech.append("ASP.NET")
+        if cookies:
+            # Match known ASP.NET cookie names exactly rather than scanning the
+            # whole header for the "ASP.NET" substring, which is imprecise.
+            cookie_names = {
+                part.split('=', 1)[0].strip().lower()
+                for part in cookies.split(';')
+                if '=' in part
+            }
+            aspnet_cookies = {'asp.net_sessionid', '.aspxauth', '.aspxanonymous'}
+            if cookie_names & aspnet_cookies:
+                tech.append("ASP.NET")
 
         if '.asp' in eventSource:
             tech.append("ASP")
