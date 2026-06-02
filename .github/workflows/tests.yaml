@@ -34,4 +34,9 @@ jobs:
           flake8 . --count --show-source --statistics
       - name: Test with pytest
         run: |
-          python -m pytest --ignore=test/integration/ --durations=5 .
+          # Hermetic run: block all network (any stray live call fails fast
+          # instead of hanging) and skip tests explicitly marked as needing it.
+          python -m pytest test/unit \
+            -m "not network" \
+            --disable-socket --allow-unix-socket \
+            --durations=5

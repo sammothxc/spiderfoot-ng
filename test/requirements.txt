@@ -13,6 +13,8 @@ flake8-simplify==0.19.3
 pytest==7.2.1
 pytest-cov==4.0.0
 pytest-mock==3.10.0
+pytest-socket==0.6.0
+pytest-timeout==2.1.0
 pytest-xdist==3.2.0
 pycodestyle==2.9.0
 responses==0.22.0

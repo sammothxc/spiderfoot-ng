@@ -12,6 +12,7 @@ class TestModuleSubdomain_takeover(unittest.TestCase):
         module = sfp_subdomain_takeover()
         self.assertEqual(len(module.opts), len(module.optdescs))
 
+    @pytest.mark.network
     def test_setup(self):
         sf = SpiderFoot(self.default_options)
         module = sfp_subdomain_takeover()

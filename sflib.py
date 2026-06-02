@@ -971,10 +971,10 @@ class SpiderFoot:
         s.connect((host, int(port)))
         # This module inspects certificates from arbitrary hosts (including
         # expired, mismatched or self-signed ones), so verification is left
-        # disabled deliberately. We still use an explicit context to negotiate
-        # a modern TLS version rather than relying on insecure defaults.
-        context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
-        context.minimum_version = ssl.TLSVersion.TLS1_2
+        # disabled deliberately. We start from the secure default context
+        # (TLS 1.2+ floor, strong ciphers) rather than relying on insecure
+        # defaults, then turn off verification for inspection purposes.
+        context = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
         context.check_hostname = False
         context.verify_mode = ssl.CERT_NONE  # noqa: DUO122
         sock = context.wrap_socket(s, server_hostname=host)

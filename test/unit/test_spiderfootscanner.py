@@ -12,6 +12,7 @@ class TestSpiderFootScanner(unittest.TestCase):
     Test SpiderFootScanStatus
     """
 
+    @pytest.mark.network
     def test_init_argument_start_false_should_create_a_scan_without_starting_the_scan(self):
         """
         Test __init__(self, scanName, scanId, scanTarget, targetType, moduleList, globalOpts, start=True)
@@ -25,6 +26,7 @@ class TestSpiderFootScanner(unittest.TestCase):
         self.assertIsInstance(sfscan, SpiderFootScanner)
         self.assertEqual(sfscan.status, "INITIALIZING")
 
+    @pytest.mark.network
     def test_init_argument_start_true_with_no_valid_modules_should_set_scanstatus_to_failed(self):
         opts = self.default_options
         opts['__modules__'] = dict()
@@ -202,6 +204,7 @@ class TestSpiderFootScanner(unittest.TestCase):
         with self.assertRaises(ValueError):
             SpiderFootScanner("example scan name", scan_id, "spiderfoot.net", "IP_ADDRESS", module_list, opts, start=False)
 
+    @pytest.mark.network
     def test_init_argument_globalOpts_proxy_should_set_proxy(self):
         """
         Test __init__(self, scanName, scanId, scanTarget, targetType, moduleList, globalOpts)
@@ -220,6 +223,7 @@ class TestSpiderFootScanner(unittest.TestCase):
 
         self.assertEqual('TBD', 'TBD')
 
+    @pytest.mark.network
     def test_init_argument_globalOpts_proxy_without_port_should_set_proxy(self):
         """
         Test __init__(self, scanName, scanId, scanTarget, targetType, moduleList, globalOpts)
@@ -236,6 +240,7 @@ class TestSpiderFootScanner(unittest.TestCase):
 
         self.assertEqual('TBD', 'TBD')
 
+    @pytest.mark.network
     def test_attribute_scanId_should_return_scan_id_as_a_string(self):
         opts = self.default_options
         opts['__modules__'] = dict()
@@ -249,6 +254,7 @@ class TestSpiderFootScanner(unittest.TestCase):
         self.assertIsInstance(get_id, str)
         self.assertEqual(scan_id, get_id)
 
+    @pytest.mark.network
     def test_attribute_status_should_return_status_as_a_string(self):
         opts = self.default_options
         opts['__modules__'] = dict()
@@ -261,6 +267,7 @@ class TestSpiderFootScanner(unittest.TestCase):
         status = sfscan.status
         self.assertIsInstance(status, str)
 
+    @pytest.mark.network
     def test__setStatus_argument_status_of_invalid_type_should_raise_TypeError(self):
         """
         Test __setStatus(self, status, started=None, ended=None)
@@ -278,6 +285,7 @@ class TestSpiderFootScanner(unittest.TestCase):
                 with self.assertRaises(TypeError):
                     sfscan._SpiderFootScanner__setStatus(invalid_type)
 
+    @pytest.mark.network
     def test__setStatus_argument_status_with_blank_value_should_raise_ValueError(self):
         """
         Test __setStatus(self, status, started=None, ended=None)

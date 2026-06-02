@@ -12,6 +12,7 @@ class TestModuleAccounts(unittest.TestCase):
         module = sfp_accounts()
         self.assertEqual(len(module.opts), len(module.optdescs))
 
+    @pytest.mark.network
     def test_setup(self):
         sf = SpiderFoot(self.default_options)
         module = sfp_accounts()

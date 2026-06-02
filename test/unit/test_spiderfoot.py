@@ -484,6 +484,7 @@ class TestSpiderFoot(unittest.TestCase):
                 dns = sf.normalizeDNS(invalid_type)
                 self.assertIsInstance(dns, list)
 
+    @pytest.mark.network
     def test_resolve_host_should_return_list(self):
         sf = SpiderFoot(self.default_options)
 
@@ -521,6 +522,7 @@ class TestSpiderFoot(unittest.TestCase):
         self.assertFalse(addrs)
         self.assertIsInstance(addrs, list)
 
+    @pytest.mark.network
     def test_resolve_host6_should_return_a_list(self):
         sf = SpiderFoot(self.default_options)
 
@@ -671,6 +673,7 @@ class TestSpiderFoot(unittest.TestCase):
         self.assertTrue(sf.useProxyForUrl('spiderfoot.net'))
         self.assertTrue(sf.useProxyForUrl('1.1.1.1'))
 
+    @pytest.mark.network
     def test_fetchUrl_argument_url_should_return_http_response_as_dict(self):
         sf = SpiderFoot(self.default_options)
 
@@ -679,6 +682,7 @@ class TestSpiderFoot(unittest.TestCase):
         self.assertEqual(res['code'], "200")
         self.assertNotEqual(res['content'], None)
 
+    @pytest.mark.network
     def test_fetchUrl_argument_headOnly_should_return_http_response_as_dict(self):
         sf = SpiderFoot(self.default_options)
 
