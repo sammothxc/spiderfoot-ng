@@ -969,7 +969,14 @@ class SpiderFoot:
         s = socket.socket()
         s.settimeout(int(timeout))
         s.connect((host, int(port)))
-        sock = ssl.wrap_socket(s)
+        # This module inspects certificates from arbitrary hosts (including
+        # expired, mismatched or self-signed ones), so verification is left
+        # disabled deliberately. We still use an explicit context to negotiate
+        # a modern TLS version rather than relying on insecure defaults.
+        context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+        context.check_hostname = False
+        context.verify_mode = ssl.CERT_NONE
+        sock = context.wrap_socket(s, server_hostname=host)
         sock.do_handshake()
         return sock
 

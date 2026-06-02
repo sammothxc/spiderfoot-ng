@@ -123,11 +123,18 @@ class sfp_wikileaks(SpiderFootPlugin):
                 keepGoing = False
 
             for link in links:
-                # We can safely skip search.wikileaks.org and others.
-                if "search.wikileaks.org/" in link:
+                host = self.sf.urlFQDN(link)
+                if not host:
                     continue
 
-                if "wikileaks.org/" not in link and "cryptome.org/" not in link:
+                # We can safely skip search.wikileaks.org and others.
+                if host == "search.wikileaks.org":
+                    continue
+
+                if not (
+                    host == "wikileaks.org" or host.endswith(".wikileaks.org")
+                    or host == "cryptome.org" or host.endswith(".cryptome.org")
+                ):
                     continue
 
                 self.debug(f"Found a link: {link}")

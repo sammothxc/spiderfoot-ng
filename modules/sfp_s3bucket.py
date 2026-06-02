@@ -159,8 +159,8 @@ class sfp_s3bucket(SpiderFootPlugin):
         self.debug(f"Received event, {eventName}, from {srcModuleName}")
 
         if eventName == "LINKED_URL_EXTERNAL":
-            if ".amazonaws.com" in eventData:
-                b = self.sf.urlFQDN(eventData)
+            b = self.sf.urlFQDN(eventData)
+            if b and b.endswith(".amazonaws.com"):
                 if b in self.opts['endpoints']:
                     try:
                         b += "/" + eventData.split(b + "/")[1].split("/")[0]

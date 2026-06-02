@@ -14,6 +14,7 @@
 import sys
 import json
 import os
+import urllib.parse
 from subprocess import PIPE, Popen, TimeoutExpired
 
 from spiderfoot import SpiderFootPlugin, SpiderFootEvent
@@ -93,26 +94,29 @@ class sfp_tool_trufflehog(SpiderFootPlugin):
             return
 
         if eventName == "SOCIAL_MEDIA":
-            if "github.com/" in eventData.lower() or "gitlab.com/" in eventData.lower() or "bitbucket.org/" in eventData.lower():
-                try:
-                    url = eventData.split(": ")[1].replace("<SFURL>", "").replace("</SFURL>", "")
-                except BaseException:
-                    self.debug("Unable to extract repository URL, skipping.")
-                    return
-            else:
+            try:
+                url = eventData.split(": ")[1].replace("<SFURL>", "").replace("</SFURL>", "")
+            except BaseException:
+                self.debug("Unable to extract repository URL, skipping.")
                 return
 
         if eventName == "PUBLIC_CODE_REPO" and self.opts['allrepos']:
-            if "github.com/" in eventData.lower() or "gitlab.com/" in eventData.lower() or "bitbucket.org/" in eventData.lower():
-                try:
-                    url = eventData.split("\n")[1].replace("URL: ", "")
-                except BaseException:
-                    self.debug("Unable to extract repository URL, skipping.")
-                    return
-            else:
+            try:
+                url = eventData.split("\n")[1].replace("URL: ", "")
+            except BaseException:
+                self.debug("Unable to extract repository URL, skipping.")
                 return
 
         if not url:
+            return
+
+        # Only scan repositories hosted on supported code-hosting providers.
+        repo_hosts = ("github.com", "gitlab.com", "bitbucket.org")
+        host = (urllib.parse.urlparse(url).hostname or "").lower()
+        if host not in repo_hosts and not any(
+            host.endswith("." + h) for h in repo_hosts
+        ):
+            self.debug(f"Skipping {url} as it is not a supported repository host.")
             return
 
         if url in self.results:
