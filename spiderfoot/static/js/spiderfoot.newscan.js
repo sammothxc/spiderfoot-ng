@@ -169,6 +169,22 @@ function updateSummary() {
     $("#module-count").text("(" + mods.length + " selected)");
 }
 
+// --- Select all / none (acts on the currently-visible/filtered rows) ---
+
+function setVisibleModules(on) {
+    $("#module-list .ns-item:visible .ns-mod").each(function() {
+        var mid = $(this).attr("data-mid");
+        if (on) selectedMods[mid] = true; else delete selectedMods[mid];
+    });
+    $(".ns-profile").removeClass("active");
+    syncModuleChecks();
+}
+
+function setVisibleDataTypes(on) {
+    $("#datatype-list .ns-item:visible .ns-data").prop("checked", on);
+    applyDataTypes();
+}
+
 // --- Filters ---
 
 function applyFilter(inputId, listId) {
@@ -221,6 +237,11 @@ $(document).ready(function() {
     });
     $("#module-filter").on("keyup", function() { applyFilter("#module-filter", "#module-list"); });
     $("#datatype-filter").on("keyup", function() { applyFilter("#datatype-filter", "#datatype-list"); });
+
+    $("#mod-all").on("click", function(e) { e.preventDefault(); setVisibleModules(true); });
+    $("#mod-none").on("click", function(e) { e.preventDefault(); setVisibleModules(false); });
+    $("#data-all").on("click", function(e) { e.preventDefault(); setVisibleDataTypes(true); });
+    $("#data-none").on("click", function(e) { e.preventDefault(); setVisibleDataTypes(false); });
 
     $("form").on("submit", function() { return submitForm(); });
 
