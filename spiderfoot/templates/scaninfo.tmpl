@@ -96,11 +96,17 @@
             if (FCOSE_OK) {
                 return {
                     name: 'fcose',
-                    quality: n > 1500 ? 'draft' : (n > 400 ? 'default' : 'proof'),
+                    quality: n > 2500 ? 'draft' : (n > 600 ? 'default' : 'proof'),
                     randomize: false,
                     animate: false,
                     fit: fit !== false,
-                    nodeSeparation: 80
+                    // Spread nodes out so children don't collide with deeper levels.
+                    nodeSeparation: 180,
+                    idealEdgeLength: 160,
+                    nodeRepulsion: 14000,
+                    gravity: 0.08,
+                    gravityRange: 4.0,
+                    numIter: 3000
                 };
             }
             return { name: 'cose', randomize: false, animate: false, fit: fit !== false };
