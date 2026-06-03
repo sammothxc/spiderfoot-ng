@@ -53,9 +53,10 @@
          </ul>
         </div>
         <div id='customvizview' class="btn-group pull-right">
-         <a id='btn-random' rel="tooltip" data-title="Random Layout" class="btn btn-default active" onClick='vizUpdate("random")'><b>R</b></a>
-         <a id='btn-forceatlas' rel="tooltip" data-title="Force Layout" class="btn btn-default" onClick='vizUpdate("force")'><b>F</b></a>
-         <a id='btn-saveimage' rel="tooltip" data-title="Save Image" class="btn btn-default dropdown-toggle" onClick='vizUpdate("download")'><i class='glyphicon glyphicon-picture glyphicon glyphicon-white'></i></a>
+         <a id='btn-relayout' rel="tooltip" data-title="Re-run layout" class="btn btn-default" onClick='cyRelayout()'><i class='glyphicon glyphicon-refresh'></i></a>
+         <a id='btn-hidenode' rel="tooltip" data-title="Hide selected node(s)" class="btn btn-default" onClick='cyHideSelected()'><i class='glyphicon glyphicon-eye-close'></i></a>
+         <a id='btn-showall' rel="tooltip" data-title="Show all nodes" class="btn btn-default" onClick='cyShowAll()'><i class='glyphicon glyphicon-eye-open'></i></a>
+         <a id='btn-saveimage' rel="tooltip" data-title="Save Image" class="btn btn-default" onClick='cyDownload()'><i class='glyphicon glyphicon-picture glyphicon glyphicon-white'></i></a>
         </div>
         <div id='modifyactions' role="group" class="btn-group pull-right">
             <a id='btn-setfp' rel="tooltip" data-title="Set/Unset False Positive flag" class="btn-warning btn btn-default dropdown-toggle" data-toggle="dropdown"><i class='glyphicon glyphicon-ban-circle glyphicon glyphicon-white'></i></a>
@@ -65,11 +66,7 @@
             </ul>
         </div>
   </div>
-    <script src="${docroot}/static/node_modules/sigma/build/sigma.min.js"></script>
-    <script src="${docroot}/static/node_modules/sigma/build/plugins/sigma.parsers.json.min.js"></script>
-    <script src="${docroot}/static/node_modules/sigma/build/plugins/sigma.plugins.dragNodes.min.js"></script>
-    <script src="${docroot}/static/node_modules/sigma/build/plugins/sigma.layout.forceAtlas2.min.js"></script>
-    <script src="${docroot}/static/node_modules/sigma/build/plugins/sigma.renderers.snapshot.min.js"></script>
+    <script src="${docroot}/static/node_modules/cytoscape/dist/cytoscape.min.js"></script>
     <script type='text/javascript'>
         var currentType = "ALL";
         var currentTypeName = "All";
@@ -77,7 +74,8 @@
         var lastSearchType = "ALL";
         var lastSearchQuery = "";
         var dataloaders = [];
-        var sharedSigma = "";
+        var sharedCy = null;
+        var graphNodeIds = {};
         var loadersrunning = false;
         var refresh = function() { browseEventList("${id}"); }
         $('#searchvalue').popover({ 'trigger': 'focus', 'placement': 'bottom'});
@@ -216,11 +214,124 @@
             });
         }
 
-        // Visualisation
+        // Visualisation (Cytoscape.js)
+
+        // Visibility state, managed independently so by-type and manual hides
+        // don't clobber each other.
+        var cyOffTypes = {};        // event type -> true when that type is hidden
+        var cyManualHidden = {};    // node id -> true when individually hidden
+        var cyHiddenVisible = false; // whether the "Hidden" group is shown
+
+        // Deterministic colour per event type (stable across reloads / updates),
+        // also used for the legend swatches so the legend is a colour key.
+        function typeColor(type) {
+            var h = 0;
+            for (var i = 0; i < type.length; i++) {
+                h = (h * 31 + type.charCodeAt(i)) % 360;
+            }
+            return 'hsl(' + h + ', 60%, 50%)';
+        }
+
+        // Cytoscape node IDs must be stable across scanviz fetches so live updates
+        // can add only new entities. scanviz numeric IDs change per request, so we
+        // key nodes by their label (unique per graph) instead.
+        function graphElementsFromData(data, onlyNew) {
+            var idToLabel = {};
+            data.nodes.forEach(function(n) { idToLabel[n.id] = n.label; });
+
+            var els = [];
+            data.nodes.forEach(function(n) {
+                if (onlyNew && graphNodeIds[n.label]) return;
+                graphNodeIds[n.label] = true;
+                els.push({
+                    group: 'nodes',
+                    data: {
+                        id: n.label, label: n.label, ntype: n.type,
+                        color: typeColor(n.type), isroot: (n.color == '#f00') ? 1 : 0
+                    },
+                    position: { x: n.x, y: n.y }
+                });
+            });
+            data.edges.forEach(function(e) {
+                var s = idToLabel[e.source], t = idToLabel[e.target];
+                if (!s || !t) return;
+                if (!graphNodeIds[s] || !graphNodeIds[t]) return;
+                var eid = 'e-' + s + '->' + t;
+                if (onlyNew && sharedCy && sharedCy.getElementById(eid).length) return;
+                els.push({ group: 'edges', data: { id: eid, source: s, target: t } });
+            });
+            return els;
+        }
+
+        function graphStyle() {
+            return [
+                { selector: 'node', style: {
+                    'background-color': 'data(color)',
+                    'label': 'data(label)',
+                    'font-size': '10px',
+                    'color': '#333',
+                    'text-opacity': 0,            // labels hidden until hover/highlight
+                    'text-background-color': '#fff',
+                    'text-background-opacity': 0.85,
+                    'text-background-padding': 2,
+                    'width': 12, 'height': 12,
+                    'text-valign': 'center', 'text-halign': 'right'
+                }},
+                { selector: 'node[isroot = 1]', style: {
+                    'width': 20, 'height': 20,
+                    'border-width': 3, 'border-color': '#c00'
+                }},
+                { selector: 'node.showlabel', style: { 'text-opacity': 1, 'z-index': 9999 }},
+                { selector: 'edge', style: {
+                    'width': 1, 'line-color': '#ccc',
+                    'curve-style': 'haystack', 'haystack-radius': 0
+                }},
+                { selector: 'node:selected', style: {
+                    'border-width': 3, 'border-color': '#3a87ad'
+                }},
+                { selector: '.faded', style: { 'opacity': 0.1 }},
+                { selector: 'node.highlighted', style: { 'z-index': 9999 }},
+                { selector: 'edge.highlighted', style: { 'line-color': '#3a87ad', 'width': 2 }}
+            ];
+        }
+
+        // Wire up the interaction handlers for a freshly-created Cytoscape instance.
+        function cyBindEvents() {
+            // Hover: reveal a node's label without permanently cluttering the view.
+            sharedCy.on('mouseover', 'node', function(evt) { evt.target.addClass('showlabel'); });
+            sharedCy.on('mouseout', 'node', function(evt) {
+                if (!evt.target.hasClass('highlighted')) evt.target.removeClass('showlabel');
+            });
+            // Click a node: copy its value and highlight directly-connected nodes.
+            sharedCy.on('tap', 'node', function(evt) {
+                var node = evt.target;
+                copyToClipboard(node.data('label'));
+                cyHighlightNeighbors(node);
+            });
+            // Click empty space: clear any highlight.
+            sharedCy.on('tap', function(evt) {
+                if (evt.target === sharedCy) cyClearHighlight();
+            });
+        }
+
+        function cyCreate(data) {
+            sharedCy = cytoscape({
+                container: document.getElementById('graph-container'),
+                elements: graphElementsFromData(data, false),
+                style: graphStyle(),
+                layout: { name: 'cose', randomize: false, animate: false }
+            });
+            cyBindEvents();
+            cyApplyVisibility();
+            cyRebuildLegend();
+        }
+
         function graphEvents(instanceId) {
             grid = "<div id='scansummary-content'><br />"
-            grid += "<div class='col-md-12 graph-container' id='graph-container'></div>"
-            grid += "</div>"
+            grid += "<div class='graph-flex'>"
+            grid += "<div class='graph-container' id='graph-container'></div>"
+            grid += "<div id='graph-legend' class='graph-legend'></div>"
+            grid += "</div></div>"
 
             $("#scansummary-content").remove();
             $("#scanlogs-content").remove();
@@ -235,32 +346,70 @@
             navTo("btn-graph");
             $("#customvizview").show();
             $("#mainbody").append(grid);
-            $("#btn-forceatlas").removeClass("active");
-            $("#btn-random").addClass("active");
 
-            sigma.renderers.def = sigma.renderers.canvas
-            sigma.parsers.json("${docroot}/scanviz?id=" + instanceId + "&gexf=0", {
-                container: 'graph-container'
-            }, function(s) { 
-                if (s.renderers[0].nodesOnScreen.length == 0) {
+            graphNodeIds = {};
+            sharedCy = null;
+            cyOffTypes = {};
+            cyManualHidden = {};
+            cyHiddenVisible = false;
+
+            sf.fetchData("${docroot}/scanviz?id=" + instanceId + "&gexf=0", null, function(raw) {
+                var data;
+                try { data = (typeof raw == "string") ? JSON.parse(raw) : raw; }
+                catch (e) { data = null; }
+                $("#loader").hide();
+                if (!data || !data.nodes || data.nodes.length == 0) {
                     $("#graph-container").append("<div class='alert alert-danger'>Insufficient data to produce a graph.</div>");
-                    $("#loader").hide();
+                    // Still poll: a running scan may produce data shortly.
+                    dataloaders.push(function() { graphLiveUpdate(instanceId); });
                     return;
                 }
-                sharedSigma = s;
-                s.settings({
-                    edgeColor: 'default',
-                    defaultEdgeColor: '#aaa',
-                    maxNodeSize: 5
-                });
-                sigma.plugins.dragNodes(s, s.renderers[0])
-                s.bind('clickNode', function(e) {
-                    var name = e.data.node.label;
-                    if (name == null) return;
-                    copyToClipboard(String(name));
-                });
-                s.refresh()
-                $("#loader").hide();
+                cyCreate(data);
+                // Stream new nodes into the graph while the scan is still running.
+                dataloaders.push(function() { graphLiveUpdate(instanceId); });
+            });
+        }
+
+        // Fade everything except the clicked node and its direct neighbours, and
+        // label the highlighted nodes so the focus area is readable.
+        function cyHighlightNeighbors(node) {
+            if (!sharedCy) return;
+            sharedCy.elements().addClass('faded');
+            sharedCy.nodes().removeClass('showlabel');
+            var hood = node.closedNeighborhood();
+            hood.removeClass('faded').addClass('highlighted');
+            hood.nodes().addClass('showlabel');
+        }
+
+        function cyClearHighlight() {
+            if (!sharedCy) return;
+            sharedCy.elements().removeClass('faded highlighted');
+            sharedCy.nodes().removeClass('showlabel');
+        }
+
+        // Add only entities not already on the graph, preserving existing layout.
+        function graphLiveUpdate(instanceId) {
+            if (currentSection != "btn-graph") return;
+            sf.fetchData("${docroot}/scanviz?id=" + instanceId + "&gexf=0", null, function(raw) {
+                var data;
+                try { data = (typeof raw == "string") ? JSON.parse(raw) : raw; }
+                catch (e) { return; }
+                if (!data || !data.nodes || data.nodes.length == 0) return;
+
+                // First data arriving after an empty start: build the graph now.
+                if (!sharedCy) {
+                    $("#graph-container").empty();
+                    cyCreate(data);
+                    return;
+                }
+
+                var newEls = graphElementsFromData(data, true);
+                if (newEls.length == 0) return;
+                sharedCy.add(newEls);
+                // Refine layout from current positions so existing nodes barely move.
+                sharedCy.layout({ name: 'cose', randomize: false, animate: false, fit: false }).run();
+                cyApplyVisibility();
+                cyRebuildLegend();
             });
         }
 
@@ -286,25 +435,111 @@
             document.body.removeChild(ta);
         }
 
-        function vizUpdate(method) {
-            s = sharedSigma
-            if (method == "force") {
-                $("#btn-forceatlas").addClass("active");
-                $("#btn-random").removeClass("active");
-                s.startForceAtlas2();
-                s.refresh();
-                setTimeout(function() { s.stopForceAtlas2() }, 5000);
-            }
+        // Apply the current visibility model (by-type toggles + manual hides) to
+        // every node. A manually-hidden node is controlled only by the "Hidden"
+        // group toggle; otherwise visibility follows its type toggle.
+        function cyApplyVisibility() {
+            if (!sharedCy) return;
+            sharedCy.batch(function() {
+                sharedCy.nodes().forEach(function(n) {
+                    var visible;
+                    if (cyManualHidden[n.id()]) {
+                        visible = cyHiddenVisible;
+                    } else {
+                        visible = !cyOffTypes[n.data('ntype')];
+                    }
+                    if (visible) n.show(); else n.hide();
+                });
+            });
+        }
 
-            if (method == "random") {
-                $("#btn-forceatlas").removeClass("active");
-                $("#btn-random").addClass("active");
-                refresh();
-            }
+        // Re-run the force layout over the whole graph.
+        function cyRelayout() {
+            if (!sharedCy) return;
+            cyClearHighlight();
+            sharedCy.layout({ name: 'cose', randomize: false, animate: false }).run();
+        }
 
-            if (method == "download") {
-                s.renderers[0].snapshot({download: true});
+        // Hide the selected node(s) into the "Hidden" group (recoverable via the
+        // Hidden entry in the legend).
+        function cyHideSelected() {
+            if (!sharedCy) return;
+            var sel = sharedCy.$('node:selected');
+            if (sel.length == 0) {
+                alertify.error("Select node(s) on the graph first, then hide.");
+                return;
             }
+            sel.forEach(function(n) { cyManualHidden[n.id()] = true; });
+            sel.unselect();
+            cyHiddenVisible = false;
+            cyApplyVisibility();
+            cyRebuildLegend();
+        }
+
+        // Reveal everything and clear all hide state (type toggles + manual hides).
+        function cyShowAll() {
+            if (!sharedCy) return;
+            cyOffTypes = {};
+            cyManualHidden = {};
+            cyHiddenVisible = false;
+            cyApplyVisibility();
+            cyRebuildLegend();
+        }
+
+        // Build the side legend: a colour key + per-type show/hide toggles, plus a
+        // recoverable "Hidden" group for individually-hidden nodes.
+        function cyRebuildLegend() {
+            if (!sharedCy) return;
+            var counts = {};
+            sharedCy.nodes().forEach(function(n) {
+                if (cyManualHidden[n.id()]) return;
+                var t = n.data('ntype');
+                counts[t] = (counts[t] || 0) + 1;
+            });
+            var sorted = Object.keys(counts).sort();
+            var html = "<div class='legend-title'>Node types</div>";
+            for (var i = 0; i < sorted.length; i++) {
+                var t = sorted[i];
+                var off = cyOffTypes[t] ? " off" : "";
+                html += "<div class='legend-item" + off + "' data-legend-type=\"" + t + "\">"
+                      + "<span class='legend-swatch' style='background:" + typeColor(t) + "'></span>"
+                      + "<span class='legend-name'>" + t + "</span>"
+                      + "<span class='legend-count'>" + counts[t] + "</span></div>";
+            }
+            var manualCount = Object.keys(cyManualHidden).length;
+            if (manualCount > 0) {
+                var hoff = cyHiddenVisible ? "" : " off";
+                html += "<div class='legend-title' style='margin-top:8px'>Hidden</div>";
+                html += "<div class='legend-item" + hoff + "' data-legend-hidden='1'>"
+                      + "<span class='legend-swatch' style='background:#888'></span>"
+                      + "<span class='legend-name'><i>Hidden nodes</i></span>"
+                      + "<span class='legend-count'>" + manualCount + "</span></div>";
+            }
+            var menu = $("#graph-legend");
+            menu.html(html);
+            menu.find("[data-legend-type]").on("click", function() {
+                var t = $(this).attr("data-legend-type");
+                cyOffTypes[t] = !cyOffTypes[t];
+                cyApplyVisibility();
+                cyRebuildLegend();
+            });
+            menu.find("[data-legend-hidden]").on("click", function() {
+                cyHiddenVisible = !cyHiddenVisible;
+                cyApplyVisibility();
+                cyRebuildLegend();
+            });
+        }
+
+        // Export the current graph view as a PNG.
+        function cyDownload() {
+            if (!sharedCy) return;
+            var png = sharedCy.png({ full: true, bg: '#ffffff', scale: 2 });
+            var a = document.createElement('a');
+            a.href = png;
+            a.download = 'spiderfoot-graph.png';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
         }
 
         // Scan status

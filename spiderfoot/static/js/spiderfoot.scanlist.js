@@ -234,7 +234,7 @@ function showlisttable(types, filter, data) {
         table += "</td></tr>";
     }
 
-    table += '</tbody><tfoot><tr><th colspan="8" class="ts-pager form-inline">';
+    table += '</tbody><tfoot><tr><th colspan="9" class="ts-pager form-inline">';
     table += '<div class="btn-group btn-group-sm" role="group">';
     table += '<button type="button" class="btn btn-default first"><span class="glyphicon glyphicon-step-backward"></span></button>';
     table += '<button type="button" class="btn btn-default prev"><span class="glyphicon glyphicon-backward"></span></button>';

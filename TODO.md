@@ -1,5 +1,7 @@
 # TODO
-- [ ] graph view live refresh
-- [ ] highlight node paths
-- [ ] remove/hide nodes, and child nodes
-- [ ] fix scan selection screen, show modules with profile
+- [ ] fix: scan selection screen, show modules with profile
+- [ ] feat: show scan duration
+- [ ] feat: graph view live refresh
+- [ ] fix: human name possibly being treated as username
+- [ ] feat: highlight node paths
+- [ ] feat: remove/hide nodes, and child nodes

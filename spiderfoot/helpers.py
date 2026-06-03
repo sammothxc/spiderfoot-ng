@@ -1,9 +1,9 @@
 #  -*- coding: utf-8 -*-
+import hashlib
 import html
 import json
 import os
 import os.path
-import random
 import re
 import ssl
 import sys
@@ -23,6 +23,7 @@ if sys.version_info >= (3, 8):  # PEP 589 support (TypedDict)
     class _GraphNode(typing.TypedDict):
         id: str  # noqa: A003
         label: str
+        type: str  # noqa: A003
         x: int
         y: int
         size: str
@@ -500,6 +501,20 @@ class SpiderFootHelpers():
         ret['nodes'] = list()
         ret['edges'] = list()
 
+        # Map each entity value to its event type so the UI can filter/hide by
+        # type. row[1] is the data value, row[4] is the event type.
+        value_to_type: typing.Dict[str, str] = {}
+        for row in data:
+            if len(row) > 4:
+                value_to_type[row[1]] = row[4]
+
+        def _coord(label: str, salt: str) -> int:
+            # Deterministic seed position from the node label so the same data
+            # always produces the same layout (no reshuffle on refresh / live
+            # update). The UI refines these with a force layout.
+            h = hashlib.md5((salt + str(label)).encode('utf-8')).hexdigest()  # noqa: DUO130
+            return (int(h[:8], 16) % 1000) + 1
+
         nodelist: typing.Dict[str, int] = dict()
         ecounter = 0
         ncounter = 0
@@ -520,8 +535,9 @@ class SpiderFootHelpers():
                 ret['nodes'].append({
                     'id': str(ncounter),
                     'label': str(dst),
-                    'x': random.SystemRandom().randint(1, 1000),
-                    'y': random.SystemRandom().randint(1, 1000),
+                    'type': value_to_type.get(dst, 'UNKNOWN'),
+                    'x': _coord(dst, 'x'),
+                    'y': _coord(dst, 'y'),
                     'size': "1",
                     'color': col
                 })
@@ -537,8 +553,9 @@ class SpiderFootHelpers():
                 ret['nodes'].append({
                     'id': str(ncounter),
                     'label': str(src),
-                    'x': random.SystemRandom().randint(1, 1000),
-                    'y': random.SystemRandom().randint(1, 1000),
+                    'type': value_to_type.get(src, 'UNKNOWN'),
+                    'x': _coord(src, 'x'),
+                    'y': _coord(src, 'y'),
                     'size': "1",
                     'color': col
                 })
@@ -605,8 +622,10 @@ class SpiderFootHelpers():
             if len(row) != 15:
                 raise ValueError(f"data row length is {len(row)}; expected 15")
 
-            if row[11] == "ENTITY" or row[11] == "INTERNAL":
-                # List of all valid entity values
+            if row[11] in ("ENTITY", "SUBENTITY", "INTERNAL"):
+                # List of all valid entity values. SUBENTITY (linked URLs, open
+                # ports, software, etc.) are included so the graph shows the full
+                # web of relationships rather than only top-level entities.
                 if len(flt) > 0:
                     if row[4] in flt or row[11] == "INTERNAL":
                         entities[row[1]] = True

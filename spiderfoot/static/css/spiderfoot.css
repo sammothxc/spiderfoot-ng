@@ -48,9 +48,79 @@ table pre {
   font-size: 10px;
 }
 
+.graph-flex {
+  display: flex;
+  gap: 8px;
+}
+
 .graph-container {
-  height: 650px;
-  width: 100%;
+  /* Fill the viewport below the header/toolbar; keep a sensible floor. */
+  height: calc(100vh - 200px);
+  min-height: 650px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.graph-legend {
+  width: 240px;
+  flex: 0 0 240px;
+  height: calc(100vh - 200px);
+  min-height: 650px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 6px 8px;
+  font-size: 12px;
+}
+
+.graph-legend .legend-title {
+  font-weight: bold;
+  color: #888;
+  text-transform: uppercase;
+  font-size: 10px;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+
+.graph-legend .legend-item {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 3px;
+}
+
+.graph-legend .legend-item:hover {
+  background: #f2f2f2;
+}
+
+.graph-legend .legend-item.off {
+  opacity: 0.4;
+}
+
+.graph-legend .legend-item.off .legend-name {
+  text-decoration: line-through;
+}
+
+.graph-legend .legend-swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  margin-right: 6px;
+  flex: 0 0 12px;
+}
+
+.graph-legend .legend-name {
+  flex: 1 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.graph-legend .legend-count {
+  color: #999;
+  margin-left: 6px;
+  flex: 0 0 auto;
 }
 
 .table-border-bg-inherit {

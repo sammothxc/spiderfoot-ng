@@ -106,7 +106,7 @@ class SpiderFootWebUi:
             .base_uri("'self'")
             .connect_src("'self'", "data:")
             .frame_src("'self'", 'data:')
-            .img_src("'self'", "data:")
+            .img_src("'self'", "data:", "blob:")
         )
 
         secure_headers = secure.Secure(
