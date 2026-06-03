@@ -22,7 +22,7 @@ Improvements this fork adds on top of upstream SpiderFoot:
 - Saved custom scan profiles: save any module selection as a named profile and reuse it, listed right alongside the built-in ones.
 - Modern interactive network graph: a live-updating, colour-coded force graph (Cytoscape) that streams in new nodes as a scan runs. Click to highlight a node's connections and copy its value; filter or hide whole event types; hidden connectors stay greyed so the structure is preserved.
 - Scan timing: a live elapsed/duration timer on the scan view, plus a sortable Duration column on the scan list.
-- Modernized stack: runs on Python 3.10–3.13 with updated dependencies, and ships as a single slim Docker image (no bundled "full" image upsell, also no marketing footer).
+- Modernized stack: tested on Python 3.10–3.13 with updated dependencies, and ships as a single slim Docker image (no bundled "full" image upsell, also no marketing footer).
 
 ## Features
 
