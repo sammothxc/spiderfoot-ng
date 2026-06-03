@@ -59,7 +59,7 @@ class TestSpiderFootWebUiRoutes(helper.CPWebCase):
         self.assertStatus('404 Not Found')
 
     def test_static_returns_200(self):
-        self.getPage("/static/img/spiderfoot-header.png")
+        self.getPage("/static/img/favicon.png")
         self.assertStatus('200 OK')
 
     def test_scaneventresultexport_invalid_scan_id_returns_200(self):

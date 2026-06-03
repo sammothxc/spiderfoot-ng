@@ -601,7 +601,8 @@ def handle_abort(signal, frame) -> None:
     sys.exit(-1)
 
 
-if __name__ == '__main__':
+def cli_main() -> None:
+    """Console-script entry point: run pre-flight checks, then start."""
     if sys.version_info < (3, 10):
         print("spiderfoot-ng requires Python 3.10 or higher.")
         sys.exit(-1)
@@ -629,3 +630,7 @@ if __name__ == '__main__':
         sys.exit(-1)
 
     main()
+
+
+if __name__ == '__main__':
+    cli_main()

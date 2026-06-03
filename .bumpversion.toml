@@ -20,3 +20,9 @@ replace = "VERSION = ({new_major}, {new_minor}, {new_patch})"
 filename = "VERSION"
 search = "spiderfoot-ng {current_version}"
 replace = "spiderfoot-ng {new_version}"
+
+# Packaging metadata version, kept in sync for PyPI builds.
+[[tool.bumpversion.files]]
+filename = "pyproject.toml"
+search = "version = \"{current_version}\""
+replace = "version = \"{new_version}\""

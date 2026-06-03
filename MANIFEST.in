@@ -1,0 +1,31 @@
+# Data files bundled into the package. node_modules is selective on purpose:
+# only the committed vendored dist files ship, never the npm build tree.
+recursive-include spiderfoot/templates *.tmpl
+recursive-include spiderfoot/static/css *.css
+recursive-include spiderfoot/static/js *.js
+recursive-include spiderfoot/static/img *
+recursive-include spiderfoot/dicts *
+recursive-include correlations *.yaml
+include spiderfoot/static/package.json
+include spiderfoot/static/package-lock.json
+
+include spiderfoot/static/node_modules/alertifyjs/build/alertify.min.js
+include spiderfoot/static/node_modules/alertifyjs/build/css/alertify.min.css
+include spiderfoot/static/node_modules/bootstrap/dist/css/bootstrap.min.css
+include spiderfoot/static/node_modules/bootstrap/dist/fonts/glyphicons-halflings-regular.woff
+include spiderfoot/static/node_modules/bootstrap/dist/fonts/glyphicons-halflings-regular.woff2
+include spiderfoot/static/node_modules/bootstrap/dist/js/bootstrap.min.js
+include spiderfoot/static/node_modules/cytoscape/dist/cytoscape.min.js
+include spiderfoot/static/node_modules/d3/d3.min.js
+include spiderfoot/static/node_modules/jquery/dist/jquery.min.js
+include spiderfoot/static/node_modules/tablesorter/dist/css/jquery.tablesorter.pager.min.css
+include spiderfoot/static/node_modules/tablesorter/dist/css/theme.default.min.css
+include spiderfoot/static/node_modules/tablesorter/dist/js/extras/jquery.tablesorter.pager.min.js
+include spiderfoot/static/node_modules/tablesorter/dist/js/jquery.tablesorter.min.js
+include spiderfoot/static/node_modules/tablesorter/dist/js/jquery.tablesorter.widgets.min.js
+
+include requirements.txt VERSION
+
+# Keep the npm build tree and editor cruft out of the sdist/wheel.
+global-exclude *.pyc
+prune spiderfoot/static/node_modules/.bin

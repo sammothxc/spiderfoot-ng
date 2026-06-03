@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "spiderfoot-ng"
+version = "4.3.3"
+description = "Open-source OSINT automation tool (community-maintained SpiderFoot fork)"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Sam Warr", email = "sam.warr.tx@gmail.com" }]
+keywords = ["osint", "security", "reconnaissance", "footprinting", "spiderfoot"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Topic :: Security",
+    "Environment :: Web Environment",
+    "Operating System :: OS Independent",
+]
+dynamic = ["dependencies"]
+
+[project.urls]
+Homepage = "https://github.com/sammothxc/spiderfoot-ng"
+Issues = "https://github.com/sammothxc/spiderfoot-ng/issues"
+
+[project.scripts]
+spiderfoot-ng = "sf:cli_main"
+
+[tool.setuptools]
+py-modules = ["sf", "sfwebui", "sflib", "sfscan", "sfcli"]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+include = ["spiderfoot*", "modules*", "correlations*"]
+
+[tool.setuptools.dynamic]
+dependencies = { file = ["requirements.txt"] }

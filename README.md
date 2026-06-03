@@ -11,6 +11,8 @@
 
 It has an embedded web server with a clean, intuitive web UI, and can also be driven entirely from the command line. It's written in Python 3 and MIT-licensed.
 
+### [Jump to Installing and Running](#installing-and-running)
+
 > **About this fork**
 > spiderfoot-ng is a fork of [smicallef/spiderfoot](https://github.com/smicallef/spiderfoot), focused on keeping the project alive with up-to-date dependencies and modern container delivery. It deliberately ships a single slim Docker image rather than the bundled "full" image, see [A note on the Docker image](#a-note-on-the-docker-image) below. Parts of this fork were built with the help of AI. AI wrote a fair share of the code, and I read all of it. If something breaks, blame AI. If it works, blame AI.
 
