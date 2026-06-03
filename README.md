@@ -1,7 +1,7 @@
 # spiderfoot-ng
 
 [![PyPI](https://img.shields.io/pypi/v/spiderfoot-ng)](https://pypi.org/project/spiderfoot-ng/)
-[![Python Versions](https://img.shields.io/pypi/pyversions/spiderfoot-ng)](https://pypi.org/project/spiderfoot-ng/)
+[![Python Versions](https://img.shields.io/pypi/pyversions/spiderfoot-ng?cacheSeconds=3600)](https://pypi.org/project/spiderfoot-ng/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Tests](https://github.com/sammothxc/spiderfoot-ng/actions/workflows/tests.yaml/badge.svg)](https://github.com/sammothxc/spiderfoot-ng/actions/workflows/tests.yaml)
 [![Docker](https://github.com/sammothxc/spiderfoot-ng/actions/workflows/docker-publish.yml/badge.svg)](https://github.com/sammothxc/spiderfoot-ng/actions/workflows/docker-publish.yml)

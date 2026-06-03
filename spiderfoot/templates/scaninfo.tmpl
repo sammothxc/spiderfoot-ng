@@ -376,12 +376,13 @@
             });
             // Keep label text size constant on screen as the user zooms.
             sharedCy.on('zoom', cyUpdateLabelScale);
-            // Right-click a node: hide it and everything downstream of it (into
-            // the recoverable "Hidden" group). Right-clicking an already-hidden
-            // node (visible via the Hidden group) un-hides it again.
+            // Right-click a node: hide it and everything downstream (into the
+            // recoverable "Hidden" group). Right-clicking a single already-hidden
+            // node (shown via the Hidden group) reveals just that one node, so you
+            // can hide a parent's whole subtree and then pull back specific children.
             sharedCy.on('cxttap', 'node', function(evt) {
                 var node = evt.target;
-                if (cyManualHidden[node.id()]) cyUnhideWithChildren(node);
+                if (cyManualHidden[node.id()]) cyUnhideNode(node);
                 else cyHideWithChildren(node);
             });
             // Suppress the browser context menu over the graph canvas.
@@ -519,37 +520,40 @@
 
         // Apply the current visibility model. Three node states:
         //   shown  - fully visible (type on, not manually hidden)
-        //   greyed - type is hidden BUT the node still connects visible nodes
-        //            (it has visible descendants), so it's kept as a faded,
-        //            still-interactive connector with its edges preserved
-        //   hidden - removed entirely (a leaf of a hidden type, or manually hidden)
+        //   greyed - hidden (by type or manually) BUT still connects a visible node
+        //            to the graph, so it's kept as a faded, still-interactive
+        //            connector with its edges preserved. This is what traces an
+        //            un-hidden child back up to the target through its (otherwise
+        //            hidden) ancestors.
+        //   hidden - removed entirely (a hidden leaf with no visible descendants)
         // Edges are shown when both endpoints are; an edge touching a greyed node
         // is greyed too.
         function cyApplyVisibility() {
             if (!sharedCy) return;
 
-            var shown = {};      // id -> true: fully visible
-            var offType = {};    // id -> true: type hidden, candidate for greying
+            var shown = {};       // id -> true: fully visible
+            var candidate = {};   // id -> true: hidden, but greyable if it leads to a shown node
             sharedCy.nodes().forEach(function(n) {
                 var id = n.id();
                 if (cyManualHidden[id]) {
-                    if (cyHiddenVisible) shown[id] = true;   // else fully hidden
+                    if (cyHiddenVisible) shown[id] = true;   // "Hidden" group revealed
+                    else candidate[id] = true;               // greyed only if it connects to a shown node
                     return;
                 }
-                if (cyOffTypes[n.data('ntype')]) offType[id] = true;
+                if (cyOffTypes[n.data('ntype')]) candidate[id] = true;
                 else shown[id] = true;
             });
 
-            // A hidden-type node is kept (greyed) if it has a child (outgoing edge)
-            // that is itself shown or kept. Propagate up the parent chain until
-            // stable so connectors several layers deep are preserved.
+            // A hidden node is kept (greyed) if it has a child (outgoing edge) that
+            // is itself shown or kept. Propagating this up the parent chain greys
+            // the whole ancestor path of any shown node back to the target.
             var kept = {};
             var changed = true;
             while (changed) {
                 changed = false;
                 sharedCy.nodes().forEach(function(n) {
                     var id = n.id();
-                    if (!offType[id] || kept[id]) return;
+                    if (!candidate[id] || kept[id]) return;
                     var keep = false;
                     n.outgoers('node').forEach(function(c) {
                         if (shown[c.id()] || kept[c.id()]) keep = true;
@@ -622,13 +626,17 @@
             cyRebuildLegend();
         }
 
-        // Un-hide a node and its (hidden) descendants: the inverse of right-click
-        // hide, used when right-clicking a node shown via the "Hidden" group.
-        function cyUnhideWithChildren(nodes) {
+        // Un-hide just the one node. Hiding is bulk (a node and its whole subtree),
+        // but un-hiding is intentionally granular: after hiding a parent, you can
+        // reveal one specific child at a time (right-click it via the "Hidden"
+        // group). Use "Show all" to bring everything back at once.
+        function cyUnhideNode(node) {
             if (!sharedCy) return;
-            var grp = nodes.union(nodes.successors().nodes())
-                           .difference(nodes.predecessors().nodes());
-            grp.nodes().forEach(function(n) { delete cyManualHidden[n.id()]; });
+            delete cyManualHidden[node.id()];
+            // Collapse the "Hidden" group so the result is visible immediately: the
+            // revealed node plus its now-greyed ancestor path back to the target,
+            // with everything else still hidden.
+            cyHiddenVisible = false;
             cyApplyVisibility();
             cyRebuildLegend();
         }
@@ -715,8 +723,9 @@
             }
             html += "<div class='legend-help'>"
                   + "<b>Nodes:</b> click to copy &amp; highlight, hover to read the "
-                  + "label, right-click to hide it and everything below it "
-                  + "(right-click again to bring it back).<br><br>"
+                  + "label, right-click to hide it and everything below it. Reveal the "
+                  + "<i>Hidden</i> group below, then right-click a node to bring back just "
+                  + "that one (or use Show all).<br><br>"
                   + "<b>Types:</b> click a type (or the <i class='glyphicon glyphicon-eye-open'></i>) "
                   + "to hide/show it; click <i class='glyphicon glyphicon-record'></i> to show "
                   + "only that type. Hidden connector nodes stay greyed so links aren't lost."
