@@ -655,9 +655,12 @@
                       + "<span class='legend-count'>" + manualCount + "</span></div>";
             }
             html += "<div class='legend-help'>"
-                  + "<b>Tip:</b> click a node to copy &amp; highlight it. "
-                  + "Hover a node to read its label. "
-                  + "Right-click a node to hide it and everything below it."
+                  + "<b>Nodes:</b> click to copy &amp; highlight, hover to read the "
+                  + "label, right-click to hide it and everything below it "
+                  + "(right-click again to bring it back).<br><br>"
+                  + "<b>Types:</b> click a type (or the <i class='glyphicon glyphicon-eye-open'></i>) "
+                  + "to hide/show it; click <i class='glyphicon glyphicon-record'></i> to show "
+                  + "only that type. Hidden connector nodes stay greyed so links aren't lost."
                   + "</div>";
             var menu = $("#graph-legend");
             menu.html(html);
