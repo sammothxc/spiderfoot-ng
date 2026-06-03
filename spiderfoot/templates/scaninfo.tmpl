@@ -391,6 +391,9 @@
                 style: graphStyle(),
                 layout: graphLayout(true)
             });
+            // After the initial layout fits, clamp the zoom so big graphs don't
+            // open zoomed out to unreadable dots.
+            sharedCy.one('layoutstop', cyClampZoom);
             cyBindEvents();
             cyApplyVisibility();
             cyRebuildLegend();
@@ -575,14 +578,28 @@
         function cyRelayout() {
             if (!sharedCy) return;
             cyClearHighlight();
-            sharedCy.layout(graphLayout(true)).run();
+            var lay = sharedCy.layout(graphLayout(true));
+            lay.one('layoutstop', cyClampZoom);
+            lay.run();
         }
 
-        // Re-centre and fit the whole graph in the viewport (recover from zoom/pan).
+        // Fitting the whole of a large graph zooms out until nodes are unreadable
+        // dots. Clamp the zoom to a usable minimum and centre on the graph instead.
+        var CY_MIN_ZOOM = 0.5;
+        function cyClampZoom() {
+            if (!sharedCy) return;
+            if (sharedCy.zoom() < CY_MIN_ZOOM) {
+                sharedCy.zoom(CY_MIN_ZOOM);
+                sharedCy.center(sharedCy.elements(':visible'));
+            }
+        }
+
+        // Re-centre the graph in the viewport (recover from zoom/pan).
         function cyResetView() {
             if (!sharedCy) return;
             cyClearHighlight();
             sharedCy.fit(sharedCy.elements(':visible'), 30);
+            cyClampZoom();
         }
 
         // Hide a node together with all of its downstream descendants. Ancestors
