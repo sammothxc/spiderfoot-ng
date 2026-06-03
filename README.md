@@ -81,6 +81,10 @@ The 200+ modules feed each other in a publisher/subscriber model to do things li
 
 ## Installing and Running
 
+### Python Package (easiest)
+
+
+
 ### Docker (recommended)
 
 ```sh

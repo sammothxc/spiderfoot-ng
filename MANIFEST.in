@@ -16,6 +16,9 @@ include spiderfoot/static/node_modules/bootstrap/dist/fonts/glyphicons-halflings
 include spiderfoot/static/node_modules/bootstrap/dist/fonts/glyphicons-halflings-regular.woff2
 include spiderfoot/static/node_modules/bootstrap/dist/js/bootstrap.min.js
 include spiderfoot/static/node_modules/cytoscape/dist/cytoscape.min.js
+include spiderfoot/static/node_modules/layout-base/layout-base.js
+include spiderfoot/static/node_modules/cose-base/cose-base.js
+include spiderfoot/static/node_modules/cytoscape-fcose/cytoscape-fcose.js
 include spiderfoot/static/node_modules/d3/d3.min.js
 include spiderfoot/static/node_modules/jquery/dist/jquery.min.js
 include spiderfoot/static/node_modules/tablesorter/dist/css/jquery.tablesorter.pager.min.css

@@ -53,6 +53,7 @@
          </ul>
         </div>
         <div id='customvizview' class="btn-group pull-right">
+         <a id='btn-resetview' rel="tooltip" data-title="Reset view (fit &amp; centre)" class="btn btn-default" onClick='cyResetView()'><i class='glyphicon glyphicon-fullscreen'></i></a>
          <a id='btn-relayout' rel="tooltip" data-title="Re-run layout" class="btn btn-default" onClick='cyRelayout()'><i class='glyphicon glyphicon-refresh'></i></a>
          <a id='btn-hidenode' rel="tooltip" data-title="Hide selected node(s)" class="btn btn-default" onClick='cyHideSelected()'><i class='glyphicon glyphicon-eye-close'></i></a>
          <a id='btn-showall' rel="tooltip" data-title="Show all nodes" class="btn btn-default" onClick='cyShowAll()'><i class='glyphicon glyphicon-eye-open'></i></a>
@@ -67,6 +68,9 @@
         </div>
   </div>
     <script src="${docroot}/static/node_modules/cytoscape/dist/cytoscape.min.js"></script>
+    <script src="${docroot}/static/node_modules/layout-base/layout-base.js"></script>
+    <script src="${docroot}/static/node_modules/cose-base/cose-base.js"></script>
+    <script src="${docroot}/static/node_modules/cytoscape-fcose/cytoscape-fcose.js"></script>
     <script type='text/javascript'>
         var currentType = "ALL";
         var currentTypeName = "All";
@@ -77,6 +81,31 @@
         var sharedCy = null;
         var graphNodeIds = {};
         var loadersrunning = false;
+
+        // Register the fast fCoSE layout. cose (built-in) is O(n^2) and hangs on
+        // large graphs, so fcose is strongly preferred; fall back if unavailable.
+        var FCOSE_OK = false;
+        try {
+            if (typeof cytoscapeFcose !== "undefined") { cytoscape.use(cytoscapeFcose); FCOSE_OK = true; }
+        } catch (e) { FCOSE_OK = false; }
+
+        // Layout config tuned to the graph size. fcose 'draft' keeps huge graphs
+        // responsive; small graphs get the nicer default quality.
+        function graphLayout(fit) {
+            var n = sharedCy ? sharedCy.nodes().length : 0;
+            if (FCOSE_OK) {
+                return {
+                    name: 'fcose',
+                    quality: n > 1500 ? 'draft' : (n > 400 ? 'default' : 'proof'),
+                    randomize: false,
+                    animate: false,
+                    fit: fit !== false,
+                    nodeSeparation: 80
+                };
+            }
+            return { name: 'cose', randomize: false, animate: false, fit: fit !== false };
+        }
+
         var refresh = function() { browseEventList("${id}"); }
         $('#searchvalue').popover({ 'trigger': 'focus', 'placement': 'bottom'});
         $('#searchvalue').keyup(function(event) {
@@ -360,7 +389,7 @@
                 container: document.getElementById('graph-container'),
                 elements: graphElementsFromData(data, false),
                 style: graphStyle(),
-                layout: { name: 'cose', randomize: false, animate: false }
+                layout: graphLayout(true)
             });
             cyBindEvents();
             cyApplyVisibility();
@@ -451,7 +480,7 @@
                 if (newEls.length == 0) return;
                 sharedCy.add(newEls);
                 // Refine layout from current positions so existing nodes barely move.
-                sharedCy.layout({ name: 'cose', randomize: false, animate: false, fit: false }).run();
+                sharedCy.layout(graphLayout(false)).run();
                 cyApplyVisibility();
                 cyRebuildLegend();
             });
@@ -546,7 +575,14 @@
         function cyRelayout() {
             if (!sharedCy) return;
             cyClearHighlight();
-            sharedCy.layout({ name: 'cose', randomize: false, animate: false }).run();
+            sharedCy.layout(graphLayout(true)).run();
+        }
+
+        // Re-centre and fit the whole graph in the viewport (recover from zoom/pan).
+        function cyResetView() {
+            if (!sharedCy) return;
+            cyClearHighlight();
+            sharedCy.fit(sharedCy.elements(':visible'), 30);
         }
 
         // Hide a node together with all of its downstream descendants. Ancestors
