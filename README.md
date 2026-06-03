@@ -27,7 +27,7 @@ It has an embedded web server with a clean, intuitive web UI, and can also be dr
 - API key export/import
 - SQLite back-end for custom querying
 - Highly configurable
-- Visualisations
+- Interactive network-graph visualisation that updates live as a scan runs
 - TOR integration for dark web searching
 - Single slim Docker image published to `ghcr.io/sammothxc/spiderfoot-ng`
 - Can call other CLI tools like DNSTwist, WhatWeb, Nmap, and CMSeeK if installed on the host
