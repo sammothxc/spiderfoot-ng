@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "spiderfoot-ng"
-version = "4.4.7"
+version = "4.4.8"
 description = "Open-source OSINT automation tool (community-maintained SpiderFoot fork)"
 readme = "README.md"
 requires-python = ">=3.10"
