@@ -87,14 +87,6 @@ a {
   color: #fff !important;
 }
 
-.dark {
-  display: inline;
-}
-
-.light {
-  display: none;
-}
-
 .fade.in {
   background: #1b1b1b !important;
 }
