@@ -221,6 +221,8 @@
         var cyOffTypes = {};        // event type -> true when that type is hidden
         var cyManualHidden = {};    // node id -> true when individually hidden
         var cyHiddenVisible = false; // whether the "Hidden" group is shown
+        var cySoloActive = null;    // type currently "soloed", or null
+        var cyPreSoloOff = null;    // saved cyOffTypes to restore when un-soloing
 
         // Deterministic colour per event type (stable across reloads / updates),
         // also used for the legend swatches so the legend is a colour key.
@@ -263,17 +265,22 @@
             return els;
         }
 
-        function graphStyle() {
+        // labelFs is the label font size in graph (model) units. We recompute it
+        // on zoom so the on-screen text size stays constant (zoom-independent).
+        function graphStyle(labelFs) {
+            labelFs = labelFs || 13;
             return [
                 { selector: 'node', style: {
                     'background-color': 'data(color)',
                     'label': 'data(label)',
-                    'font-size': '10px',
-                    'color': '#333',
+                    'font-size': labelFs,
+                    'font-weight': 'bold',
+                    'color': '#222',
                     'text-opacity': 0,            // labels hidden until hover/highlight
                     'text-background-color': '#fff',
-                    'text-background-opacity': 0.85,
-                    'text-background-padding': 2,
+                    'text-background-opacity': 0.9,
+                    'text-background-padding': 3,
+                    'text-background-shape': 'roundrectangle',
                     'width': 12, 'height': 12,
                     'text-valign': 'center', 'text-halign': 'right'
                 }},
@@ -282,6 +289,7 @@
                     'border-width': 3, 'border-color': '#c00'
                 }},
                 { selector: 'node.showlabel', style: { 'text-opacity': 1, 'z-index': 9999 }},
+                { selector: 'node.pinlabel', style: { 'text-opacity': 1, 'z-index': 9999 }},
                 { selector: 'edge', style: {
                     'width': 1, 'line-color': '#ccc',
                     'curve-style': 'haystack', 'haystack-radius': 0
@@ -289,20 +297,39 @@
                 { selector: 'node:selected', style: {
                     'border-width': 3, 'border-color': '#3a87ad'
                 }},
+                { selector: 'node.greyed', style: {
+                    'background-color': '#bbb', 'opacity': 0.45
+                }},
+                { selector: 'edge.greyed', style: { 'line-color': '#ddd', 'opacity': 0.4 }},
                 { selector: '.faded', style: { 'opacity': 0.1 }},
                 { selector: 'node.highlighted', style: { 'z-index': 9999 }},
                 { selector: 'edge.highlighted', style: { 'line-color': '#3a87ad', 'width': 2 }}
             ];
         }
 
+        // Keep label text a constant on-screen size regardless of zoom level.
+        var cyLastLabelZoom = 0;
+        function cyUpdateLabelScale() {
+            if (!sharedCy) return;
+            var z = sharedCy.zoom();
+            if (z <= 0 || Math.abs(z - cyLastLabelZoom) < 0.02) return;
+            cyLastLabelZoom = z;
+            sharedCy.style().fromJson(graphStyle(13 / z)).update();
+        }
+
         // Wire up the interaction handlers for a freshly-created Cytoscape instance.
         function cyBindEvents() {
-            // Hover: reveal a node's label without permanently cluttering the view.
-            sharedCy.on('mouseover', 'node', function(evt) { evt.target.addClass('showlabel'); });
-            sharedCy.on('mouseout', 'node', function(evt) {
-                if (!evt.target.hasClass('highlighted')) evt.target.removeClass('showlabel');
+            // Hover: reveal a node's label. While a node is focused (highlight
+            // active), only the highlighted (non-faded) nodes respond, so a big
+            // neighbourhood doesn't flood the view with text.
+            sharedCy.on('mouseover', 'node', function(evt) {
+                if (!evt.target.hasClass('faded')) evt.target.addClass('showlabel');
             });
-            // Click a node: copy its value and highlight directly-connected nodes.
+            sharedCy.on('mouseout', 'node', function(evt) {
+                evt.target.removeClass('showlabel');
+            });
+            // Click a node: copy its value, highlight its neighbourhood, and pin
+            // only the clicked node's label (not every neighbour's).
             sharedCy.on('tap', 'node', function(evt) {
                 var node = evt.target;
                 copyToClipboard(node.data('label'));
@@ -311,6 +338,20 @@
             // Click empty space: clear any highlight.
             sharedCy.on('tap', function(evt) {
                 if (evt.target === sharedCy) cyClearHighlight();
+            });
+            // Keep label text size constant on screen as the user zooms.
+            sharedCy.on('zoom', cyUpdateLabelScale);
+            // Right-click a node: hide it and everything downstream of it (into
+            // the recoverable "Hidden" group). Right-clicking an already-hidden
+            // node (visible via the Hidden group) un-hides it again.
+            sharedCy.on('cxttap', 'node', function(evt) {
+                var node = evt.target;
+                if (cyManualHidden[node.id()]) cyUnhideWithChildren(node);
+                else cyHideWithChildren(node);
+            });
+            // Suppress the browser context menu over the graph canvas.
+            $("#graph-container").off('contextmenu').on('contextmenu', function(e) {
+                e.preventDefault();
             });
         }
 
@@ -352,6 +393,8 @@
             cyOffTypes = {};
             cyManualHidden = {};
             cyHiddenVisible = false;
+            cySoloActive = null;
+            cyPreSoloOff = null;
 
             sf.fetchData("${docroot}/scanviz?id=" + instanceId + "&gexf=0", null, function(raw) {
                 var data;
@@ -371,20 +414,21 @@
         }
 
         // Fade everything except the clicked node and its direct neighbours, and
-        // label the highlighted nodes so the focus area is readable.
+        // Fade everything except the clicked node and its neighbourhood, and pin
+        // only the clicked node's label. Neighbours' labels appear on hover.
         function cyHighlightNeighbors(node) {
             if (!sharedCy) return;
             sharedCy.elements().addClass('faded');
-            sharedCy.nodes().removeClass('showlabel');
+            sharedCy.nodes().removeClass('showlabel pinlabel');
             var hood = node.closedNeighborhood();
             hood.removeClass('faded').addClass('highlighted');
-            hood.nodes().addClass('showlabel');
+            node.addClass('pinlabel');
         }
 
         function cyClearHighlight() {
             if (!sharedCy) return;
             sharedCy.elements().removeClass('faded highlighted');
-            sharedCy.nodes().removeClass('showlabel');
+            sharedCy.nodes().removeClass('showlabel pinlabel');
         }
 
         // Add only entities not already on the graph, preserving existing layout.
@@ -435,20 +479,65 @@
             document.body.removeChild(ta);
         }
 
-        // Apply the current visibility model (by-type toggles + manual hides) to
-        // every node. A manually-hidden node is controlled only by the "Hidden"
-        // group toggle; otherwise visibility follows its type toggle.
+        // Apply the current visibility model. Three node states:
+        //   shown  - fully visible (type on, not manually hidden)
+        //   greyed - type is hidden BUT the node still connects visible nodes
+        //            (it has visible descendants), so it's kept as a faded,
+        //            still-interactive connector with its edges preserved
+        //   hidden - removed entirely (a leaf of a hidden type, or manually hidden)
+        // Edges are shown when both endpoints are; an edge touching a greyed node
+        // is greyed too.
         function cyApplyVisibility() {
             if (!sharedCy) return;
+
+            var shown = {};      // id -> true: fully visible
+            var offType = {};    // id -> true: type hidden, candidate for greying
+            sharedCy.nodes().forEach(function(n) {
+                var id = n.id();
+                if (cyManualHidden[id]) {
+                    if (cyHiddenVisible) shown[id] = true;   // else fully hidden
+                    return;
+                }
+                if (cyOffTypes[n.data('ntype')]) offType[id] = true;
+                else shown[id] = true;
+            });
+
+            // A hidden-type node is kept (greyed) if it has a child (outgoing edge)
+            // that is itself shown or kept. Propagate up the parent chain until
+            // stable so connectors several layers deep are preserved.
+            var kept = {};
+            var changed = true;
+            while (changed) {
+                changed = false;
+                sharedCy.nodes().forEach(function(n) {
+                    var id = n.id();
+                    if (!offType[id] || kept[id]) return;
+                    var keep = false;
+                    n.outgoers('node').forEach(function(c) {
+                        if (shown[c.id()] || kept[c.id()]) keep = true;
+                    });
+                    if (keep) { kept[id] = true; changed = true; }
+                });
+            }
+
             sharedCy.batch(function() {
                 sharedCy.nodes().forEach(function(n) {
-                    var visible;
-                    if (cyManualHidden[n.id()]) {
-                        visible = cyHiddenVisible;
+                    var id = n.id();
+                    if (shown[id]) { n.show(); n.removeClass('greyed'); }
+                    else if (kept[id]) { n.show(); n.addClass('greyed'); }
+                    else { n.hide(); }
+                });
+                sharedCy.edges().forEach(function(e) {
+                    var s = e.source().id(), t = e.target().id();
+                    var sv = shown[s] || kept[s];
+                    var tv = shown[t] || kept[t];
+                    if (sv && tv) {
+                        e.show();
+                        if (kept[s] || kept[t]) e.addClass('greyed');
+                        else e.removeClass('greyed');
                     } else {
-                        visible = !cyOffTypes[n.data('ntype')];
+                        e.hide();
                     }
-                    if (visible) n.show(); else n.hide();
                 });
             });
         }
@@ -460,8 +549,33 @@
             sharedCy.layout({ name: 'cose', randomize: false, animate: false }).run();
         }
 
-        // Hide the selected node(s) into the "Hidden" group (recoverable via the
-        // Hidden entry in the legend).
+        // Hide a node together with all of its downstream descendants. Ancestors
+        // are explicitly excluded so a cycle (e.g. a parent<->child pair) can't
+        // drag the parent into the hidden set via successors().
+        function cyHideWithChildren(nodes) {
+            if (!sharedCy) return;
+            var grp = nodes.union(nodes.successors().nodes())
+                           .difference(nodes.predecessors().nodes());
+            grp.nodes().forEach(function(n) { cyManualHidden[n.id()] = true; });
+            grp.unselect();
+            cyHiddenVisible = false;
+            cyApplyVisibility();
+            cyRebuildLegend();
+        }
+
+        // Un-hide a node and its (hidden) descendants: the inverse of right-click
+        // hide, used when right-clicking a node shown via the "Hidden" group.
+        function cyUnhideWithChildren(nodes) {
+            if (!sharedCy) return;
+            var grp = nodes.union(nodes.successors().nodes())
+                           .difference(nodes.predecessors().nodes());
+            grp.nodes().forEach(function(n) { delete cyManualHidden[n.id()]; });
+            cyApplyVisibility();
+            cyRebuildLegend();
+        }
+
+        // Hide the selected node(s) (and their descendants) into the "Hidden"
+        // group (recoverable via the Hidden entry in the legend).
         function cyHideSelected() {
             if (!sharedCy) return;
             var sel = sharedCy.$('node:selected');
@@ -469,11 +583,7 @@
                 alertify.error("Select node(s) on the graph first, then hide.");
                 return;
             }
-            sel.forEach(function(n) { cyManualHidden[n.id()] = true; });
-            sel.unselect();
-            cyHiddenVisible = false;
-            cyApplyVisibility();
-            cyRebuildLegend();
+            cyHideWithChildren(sel);
         }
 
         // Reveal everything and clear all hide state (type toggles + manual hides).
@@ -482,12 +592,36 @@
             cyOffTypes = {};
             cyManualHidden = {};
             cyHiddenVisible = false;
+            cySoloActive = null;
+            cyPreSoloOff = null;
             cyApplyVisibility();
             cyRebuildLegend();
         }
 
-        // Build the side legend: a colour key + per-type show/hide toggles, plus a
-        // recoverable "Hidden" group for individually-hidden nodes.
+        // Show only the given type (hide every other type). Acts as a toggle:
+        // clicking solo again restores the filter state from before the solo, so
+        // categories you'd hidden by hand stay hidden. Connectors of the hidden
+        // types are greyed rather than removed, per cyApplyVisibility.
+        function cySoloType(type) {
+            if (!sharedCy) return;
+            if (cySoloActive === type) {
+                cyOffTypes = cyPreSoloOff || {};
+                cySoloActive = null;
+                cyPreSoloOff = null;
+            } else {
+                if (cySoloActive === null) cyPreSoloOff = $.extend({}, cyOffTypes);
+                var types = {};
+                sharedCy.nodes().forEach(function(n) { types[n.data('ntype')] = true; });
+                cyOffTypes = {};
+                Object.keys(types).forEach(function(t) { if (t !== type) cyOffTypes[t] = true; });
+                cySoloActive = type;
+            }
+            cyApplyVisibility();
+            cyRebuildLegend();
+        }
+
+        // Build the side legend: a colour key + per-type show/hide and "solo"
+        // controls, plus a recoverable "Hidden" group for individually-hidden nodes.
         function cyRebuildLegend() {
             if (!sharedCy) return;
             var counts = {};
@@ -501,10 +635,15 @@
             for (var i = 0; i < sorted.length; i++) {
                 var t = sorted[i];
                 var off = cyOffTypes[t] ? " off" : "";
-                html += "<div class='legend-item" + off + "' data-legend-type=\"" + t + "\">"
+                var eye = cyOffTypes[t] ? "glyphicon-eye-close" : "glyphicon-eye-open";
+                html += "<div class='legend-item" + off + "'>"
                       + "<span class='legend-swatch' style='background:" + typeColor(t) + "'></span>"
-                      + "<span class='legend-name'>" + t + "</span>"
-                      + "<span class='legend-count'>" + counts[t] + "</span></div>";
+                      + "<span class='legend-name' data-legend-type=\"" + t + "\">" + t + "</span>"
+                      + "<span class='legend-count'>" + counts[t] + "</span>"
+                      + "<span class='legend-actions'>"
+                      + "<i class='glyphicon " + eye + " legend-act' data-toggle-type=\"" + t + "\" title='Show/hide this type'></i>"
+                      + "<i class='glyphicon glyphicon-record legend-act' data-solo-type=\"" + t + "\" title='Show only this type'></i>"
+                      + "</span></div>";
             }
             var manualCount = Object.keys(cyManualHidden).length;
             if (manualCount > 0) {
@@ -515,13 +654,28 @@
                       + "<span class='legend-name'><i>Hidden nodes</i></span>"
                       + "<span class='legend-count'>" + manualCount + "</span></div>";
             }
+            html += "<div class='legend-help'>"
+                  + "<b>Tip:</b> click a node to copy &amp; highlight it. "
+                  + "Hover a node to read its label. "
+                  + "Right-click a node to hide it and everything below it."
+                  + "</div>";
             var menu = $("#graph-legend");
             menu.html(html);
-            menu.find("[data-legend-type]").on("click", function() {
-                var t = $(this).attr("data-legend-type");
+            // Clicking the name or the eye toggles that type's visibility. A
+            // manual toggle ends any active "solo" so its restore state is fresh.
+            menu.find("[data-legend-type], [data-toggle-type]").on("click", function(ev) {
+                ev.stopPropagation();
+                var t = $(this).attr("data-legend-type") || $(this).attr("data-toggle-type");
                 cyOffTypes[t] = !cyOffTypes[t];
+                cySoloActive = null;
+                cyPreSoloOff = null;
                 cyApplyVisibility();
                 cyRebuildLegend();
+            });
+            // The target icon shows only that type.
+            menu.find("[data-solo-type]").on("click", function(ev) {
+                ev.stopPropagation();
+                cySoloType($(this).attr("data-solo-type"));
             });
             menu.find("[data-legend-hidden]").on("click", function() {
                 cyHiddenVisible = !cyHiddenVisible;
@@ -712,6 +866,7 @@
         // Correlation results for the scan
         function browseCorrelations(instanceId) {
             $("#scansummary-content").remove();
+            $("#scanlogs-content").remove();
             $("#loader").show();
             $("#btn-search").hide();
             $("#btn-export").hide();

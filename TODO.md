@@ -5,3 +5,4 @@
 - [ ] fix: human name possibly being treated as username
 - [ ] feat: highlight node paths
 - [ ] feat: remove/hide nodes, and child nodes
+- [ ] feat: save graph views

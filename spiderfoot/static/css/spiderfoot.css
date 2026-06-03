@@ -123,6 +123,35 @@ table pre {
   flex: 0 0 auto;
 }
 
+.graph-legend .legend-actions {
+  flex: 0 0 auto;
+  margin-left: 6px;
+  visibility: hidden;
+}
+
+.graph-legend .legend-item:hover .legend-actions {
+  visibility: visible;
+}
+
+.graph-legend .legend-act {
+  margin-left: 5px;
+  color: #888;
+  cursor: pointer;
+}
+
+.graph-legend .legend-act:hover {
+  color: #3a87ad;
+}
+
+.graph-legend .legend-help {
+  margin-top: 12px;
+  padding-top: 8px;
+  border-top: 1px solid #eee;
+  color: #999;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
 .table-border-bg-inherit {
   border: 0px;
   background-color: inherit;
