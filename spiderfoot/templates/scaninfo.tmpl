@@ -363,16 +363,32 @@
             sharedCy.on('mouseout', 'node', function(evt) {
                 evt.target.removeClass('showlabel');
             });
-            // Click a node: copy its value, highlight its neighbourhood, and pin
-            // only the clicked node's label (not every neighbour's).
+            // Selection is left to Cytoscape (selectionType 'additive'): a plain
+            // click selects one node, Ctrl-click adds/removes a node, and
+            // Ctrl-drag box-selects a region. (Ctrl is used rather than Shift
+            // because Cytoscape's box-select fires on Shift-drag too.) We only
+            // layer behaviour on top of that:
+            //   - plain click: collapse the selection to just this node, copy its
+            //     value, and highlight its route to the target.
+            //   - Ctrl/box (multi): leave the accumulating selection alone.
             sharedCy.on('tap', 'node', function(evt) {
                 var node = evt.target;
+                var oe = evt.originalEvent;
+                var additive = oe && (oe.ctrlKey || oe.metaKey);
+                if (additive) return;   // let Cytoscape accumulate the selection
+                // Plain click: keep only this node selected.
+                sharedCy.nodes().not(node).unselect();
                 copyToClipboard(node.data('label'));
                 cyHighlightNeighbors(node);
             });
-            // Click empty space: clear any highlight.
+            // Click empty space: clear selection and any highlight. Ignore when
+            // Ctrl is held so a Ctrl-drag box-select isn't wiped on mouse-up.
             sharedCy.on('tap', function(evt) {
-                if (evt.target === sharedCy) cyClearHighlight();
+                if (evt.target !== sharedCy) return;
+                var oe = evt.originalEvent;
+                if (oe && (oe.ctrlKey || oe.metaKey)) return;
+                sharedCy.nodes().unselect();
+                cyClearHighlight();
             });
             // Keep label text size constant on screen as the user zooms.
             sharedCy.on('zoom', cyUpdateLabelScale);
@@ -396,7 +412,10 @@
                 container: document.getElementById('graph-container'),
                 elements: graphElementsFromData(data, false),
                 style: graphStyle(),
-                layout: graphLayout(true)
+                layout: graphLayout(true),
+                // 'additive' so Cytoscape never auto-deselects on tap; our tap
+                // handlers manage selection (plain click = single, Ctrl = multi).
+                selectionType: 'additive'
             });
             // After the initial layout fits, clamp the zoom so big graphs don't
             // open zoomed out to unreadable dots.
@@ -731,7 +750,10 @@
                   + "<b>Nodes:</b> click to copy &amp; highlight, hover to read the "
                   + "label, right-click to hide it and everything below it. Reveal the "
                   + "<i>Hidden</i> group below, then right-click a node to bring back just "
-                  + "that one (or use Show all).<br><br>"
+                  + "that one (or use Show all). <b>Ctrl-click</b> nodes (or "
+                  + "<b>Ctrl-drag</b> a box) to select several, then use "
+                  + "<i class='glyphicon glyphicon-eye-close'></i> to hide them "
+                  + "together.<br><br>"
                   + "<b>Types:</b> click a type (or the <i class='glyphicon glyphicon-eye-open'></i>) "
                   + "to hide/show it; click <i class='glyphicon glyphicon-record'></i> to show "
                   + "only that type. Hidden connector nodes stay greyed so links aren't lost."
