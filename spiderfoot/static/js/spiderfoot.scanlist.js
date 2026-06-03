@@ -2,6 +2,24 @@ globalTypes = null;
 globalFilter = null;
 lastChecked = null;
 
+// Human-readable scan duration from "YYYY-MM-DD HH:MM:SS" start/finish strings.
+// For a still-running scan (finish is "Not yet") it shows elapsed time so far.
+function scanDuration(startedStr, finishedStr) {
+    if (!startedStr || startedStr === "Not yet") return "-";
+    var start = new Date(startedStr.replace(' ', 'T')).getTime();
+    if (isNaN(start)) return "-";
+    var end = (finishedStr && finishedStr !== "Not yet")
+        ? new Date(finishedStr.replace(' ', 'T')).getTime()
+        : Date.now();
+    if (isNaN(end)) return "-";
+    var secs = Math.max(0, Math.round((end - start) / 1000));
+    var h = Math.floor(secs / 3600), m = Math.floor((secs % 3600) / 60), s = secs % 60;
+    var out = "";
+    if (h > 0) out += h + "h ";
+    if (h > 0 || m > 0) out += m + "m ";
+    return out + s + "s";
+}
+
 function switchSelectAll() {
     if (!$("#checkall")[0].checked) {
         $("input[id*=cb_]").prop('checked', false);
@@ -189,7 +207,7 @@ function showlisttable(types, filter, data) {
 
     buttons += "</div>";
     var table = "<table id='scanlist' class='table table-bordered table-striped'>";
-    table += "<thead><tr><th class='sorter-false text-center'><input id='checkall' type='checkbox'></th> <th>Name</th> <th>Target</th> <th>Started</th> <th >Finished</th> <th class='text-center'>Status</th> <th class='text-center'>Elements</th><th class='text-center'>Correlations</th><th class='sorter-false text-center'>Action</th> </tr></thead><tbody>";
+    table += "<thead><tr><th class='sorter-false text-center'><input id='checkall' type='checkbox'></th> <th>Name</th> <th>Target</th> <th>Started</th> <th >Finished</th> <th class='text-center'>Duration</th> <th class='text-center'>Status</th> <th class='text-center'>Elements</th><th class='text-center'>Correlations</th><th class='sorter-false text-center'>Action</th> </tr></thead><tbody>";
     filtered = 0;
     for (var i = 0; i < data.length; i++) {
         if (types != null && $.inArray(data[i][6], types)) {
@@ -201,6 +219,7 @@ function showlisttable(types, filter, data) {
         table += "<td>" + data[i][2] + "</td>";
         table += "<td>" + data[i][3] + "</td>";
         table += "<td>" + data[i][5] + "</td>";
+        table += "<td class='text-center'>" + scanDuration(data[i][4], data[i][5]) + "</td>";
 
         var statusy = "";
 
@@ -234,7 +253,7 @@ function showlisttable(types, filter, data) {
         table += "</td></tr>";
     }
 
-    table += '</tbody><tfoot><tr><th colspan="9" class="ts-pager form-inline">';
+    table += '</tbody><tfoot><tr><th colspan="10" class="ts-pager form-inline">';
     table += '<div class="btn-group btn-group-sm" role="group">';
     table += '<button type="button" class="btn btn-default first"><span class="glyphicon glyphicon-step-backward"></span></button>';
     table += '<button type="button" class="btn btn-default prev"><span class="glyphicon glyphicon-backward"></span></button>';
@@ -258,7 +277,18 @@ function showlisttable(types, filter, data) {
     $("#scancontent-wrapper").remove();
     $("#scancontent").append("<div id='scancontent-wrapper'> " + buttons + table + "</div>");
     sf.updateTooltips();
-    $("#scanlist").tablesorter().tablesorterPager({
+    // Sort the Duration column by elapsed seconds rather than its text.
+    $.tablesorter.addParser({
+        id: 'duration',
+        is: function() { return false; },
+        format: function(s) {
+            if (!s || s === '-') return -1;
+            var h = /(\d+)h/.exec(s), m = /(\d+)m/.exec(s), sec = /(\d+)s/.exec(s);
+            return (h ? +h[1] : 0) * 3600 + (m ? +m[1] : 0) * 60 + (sec ? +sec[1] : 0);
+        },
+        type: 'numeric'
+    });
+    $("#scanlist").tablesorter({ headers: { 5: { sorter: 'duration' } } }).tablesorterPager({
       container: $(".ts-pager"),
       cssGoto: ".pagenum",
       output: 'Scans {startRow} - {endRow} / {filteredRows} ({totalRows})'

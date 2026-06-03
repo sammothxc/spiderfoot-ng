@@ -13,7 +13,7 @@
     statusy = "alert-info"
   end
 %>
-<h2>${name}&nbsp;<span id='scanstatusbadge' class='badge ${statusy}'>${status}</span>&nbsp;<img id="loader" src="${docroot}/static/img/loader.gif"></h2>
+<h2>${name}&nbsp;<span id='scanstatusbadge' class='badge ${statusy}'>${status}</span>&nbsp;<span id='scanelapsed' class='text-muted' style='font-size: 14px'></span>&nbsp;<img id="loader" src="${docroot}/static/img/loader.gif"></h2>
   <div class="btn-toolbar" role="toolbar" style='padding-bottom: 10px'>
    <div class="btn-group">
       <a id='btn-status' class="btn btn-default" onClick='scanSummaryView("${id}")'><i class='glyphicon glyphicon-eye-open'></i>&nbsp;Summary</a>
@@ -1319,6 +1319,49 @@
         }
 
         refreshSummaryInterval = setInterval(refreshSummary, 5000);
+
+        // Scan duration: how long a scan ran (finished) or has been running (live).
+        var scanStartedEpoch = ${started};
+        var scanEndedEpoch = ${ended};
+        var scanFrozenEnd = 0;
+
+        function fmtDuration(secs) {
+            if (secs < 0) secs = 0;
+            var h = Math.floor(secs / 3600);
+            var m = Math.floor((secs % 3600) / 60);
+            var s = Math.floor(secs % 60);
+            var out = "";
+            if (h > 0) out += h + "h ";
+            if (h > 0 || m > 0) out += m + "m ";
+            return out + s + "s";
+        }
+
+        function updateElapsed() {
+            var el = document.getElementById("scanelapsed");
+            if (!el) return;
+            if (!scanStartedEpoch || scanStartedEpoch < 1) { el.innerHTML = ""; return; }
+
+            var status = document.getElementById("scanstatusbadge").innerHTML;
+            var terminal = (status == "FINISHED" || status.indexOf("ABORT") >= 0 || status.indexOf("FAILED") >= 0);
+
+            var end, label;
+            if (scanEndedEpoch && scanEndedEpoch > 1) {
+                end = scanEndedEpoch;            // already finished at page load
+                label = "took ";
+            } else if (terminal) {
+                // Finished while we were watching: freeze at the moment we noticed.
+                if (!scanFrozenEnd) scanFrozenEnd = Math.floor(Date.now() / 1000);
+                end = scanFrozenEnd;
+                label = "took ";
+            } else {
+                end = Math.floor(Date.now() / 1000);  // still running
+                label = "running ";
+            }
+            el.innerHTML = label + fmtDuration(end - scanStartedEpoch);
+        }
+
+        updateElapsed();
+        setInterval(updateElapsed, 1000);
 
     </script>
 <iframe class="hidden" id='exportframe'></iframe>
