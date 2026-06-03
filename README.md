@@ -2,10 +2,10 @@
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Python Version](https://img.shields.io/badge/python-3.10+-green)](https://www.python.org)
+[![Last Commit](https://img.shields.io/github/last-commit/sammothxc/spiderfoot-ng)](https://github.com/sammothxc/spiderfoot-ng/commits/master)
 [![Tests](https://github.com/sammothxc/spiderfoot-ng/actions/workflows/tests.yaml/badge.svg)](https://github.com/sammothxc/spiderfoot-ng/actions/workflows/tests.yaml)
 [![Docker](https://github.com/sammothxc/spiderfoot-ng/actions/workflows/docker-publish.yml/badge.svg)](https://github.com/sammothxc/spiderfoot-ng/actions/workflows/docker-publish.yml)
 [![CodeQL](https://github.com/sammothxc/spiderfoot-ng/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/sammothxc/spiderfoot-ng/actions/workflows/codeql-analysis.yml)
-[![Last Commit](https://img.shields.io/github/last-commit/sammothxc/spiderfoot-ng)](https://github.com/sammothxc/spiderfoot-ng/commits/master)
 
 **spiderfoot-ng** is an open-source intelligence (OSINT) automation tool. It integrates with hundreds of data sources and combines them with analysis modules to make the resulting data easy to navigate.
 
