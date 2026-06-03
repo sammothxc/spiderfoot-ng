@@ -707,7 +707,7 @@
                 var eye = cyOffTypes[t] ? "glyphicon-eye-close" : "glyphicon-eye-open";
                 html += "<div class='legend-item" + off + "'>"
                       + "<span class='legend-swatch' style='background:" + typeColor(t) + "'></span>"
-                      + "<span class='legend-name' data-legend-type=\"" + t + "\">" + t + "</span>"
+                      + "<span class='legend-name' data-legend-type=\"" + t + "\" title=\"" + t + "\">" + t + "</span>"
                       + "<span class='legend-count'>" + counts[t] + "</span>"
                       + "<span class='legend-actions'>"
                       + "<i class='glyphicon " + eye + " legend-act' data-toggle-type=\"" + t + "\" title='Show/hide this type'></i>"
