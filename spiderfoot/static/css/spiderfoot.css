@@ -337,8 +337,9 @@ input:checked + .slider:before {
 
 .newscan-col-body {
   overflow-y: auto;
-  height: calc(100vh - 380px);
-  min-height: 320px;
+  height: calc(100vh - 320px);
+  min-height: 360px;
+  max-height: 760px;
   padding: 0 6px 6px;
 }
 
