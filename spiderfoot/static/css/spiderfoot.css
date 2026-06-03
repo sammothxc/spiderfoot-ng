@@ -389,6 +389,30 @@ input:checked + .slider:before {
   color: #fff;
 }
 
+.ns-profile.ns-custom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-weight: normal;
+}
+
+.ns-del-profile {
+  color: #bbb;
+  font-size: 16px;
+  line-height: 1;
+  padding: 0 4px;
+  text-decoration: none;
+}
+
+.ns-del-profile:hover {
+  color: #a94442;
+  text-decoration: none;
+}
+
+.ns-profile.active .ns-del-profile {
+  color: #dceefb;
+}
+
 .ns-badge {
   font-size: 10px;
   padding: 0 4px;

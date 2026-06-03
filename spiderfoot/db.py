@@ -98,6 +98,11 @@ class SpiderFootDb:
             correlation_id      VARCHAR NOT NULL REFERENCES tbl_scan_correlation_results(id), \
             event_hash          VARCHAR NOT NULL REFERENCES tbl_scan_results(hash) \
         )",
+        "CREATE TABLE tbl_scan_profile ( \
+            name        VARCHAR NOT NULL PRIMARY KEY, \
+            modules     VARCHAR NOT NULL, \
+            created     INT DEFAULT 0 \
+        )",
         "CREATE INDEX idx_scan_results_id ON tbl_scan_results (scan_instance_id)",
         "CREATE INDEX idx_scan_results_type ON tbl_scan_results (scan_instance_id, type)",
         "CREATE INDEX idx_scan_results_hash ON tbl_scan_results (scan_instance_id, hash)",
@@ -373,6 +378,19 @@ class SpiderFootDb:
                     raise IOError("Looks like you are running a pre-4.0 database. Unfortunately "
                                   "SpiderFoot wasn't able to migrate you, so you'll need to delete "
                                   "your SpiderFoot database in order to proceed.") from None
+
+            # Add the custom scan-profile table for databases created before it
+            # existed.
+            try:
+                self.dbh.execute("SELECT COUNT(*) FROM tbl_scan_profile")
+            except sqlite3.Error:
+                try:
+                    for query in self.createSchemaQueries:
+                        if "tbl_scan_profile" in query:
+                            self.dbh.execute(query)
+                    self.conn.commit()
+                except sqlite3.Error:
+                    pass
 
             if init:
                 for row in self.eventDetails:
@@ -1465,6 +1483,69 @@ class SpiderFootDb:
                 return self.dbh.fetchall()
             except sqlite3.Error as e:
                 raise IOError("SQL error encountered when fetching scan list") from e
+
+    def scanProfileList(self) -> list:
+        """List saved custom scan profiles.
+
+        Returns:
+            list: rows of (name, modules, created)
+
+        Raises:
+            IOError: database I/O failed
+        """
+        with self.dbhLock:
+            try:
+                self.dbh.execute("SELECT name, modules, created FROM tbl_scan_profile ORDER BY name")
+                return self.dbh.fetchall()
+            except sqlite3.Error as e:
+                raise IOError("SQL error encountered when fetching scan profiles") from e
+
+    def scanProfileSet(self, name: str, modules: str) -> None:
+        """Create or update a custom scan profile.
+
+        Args:
+            name (str): profile name
+            modules (str): JSON-encoded list of module names
+
+        Raises:
+            TypeError: arg type was invalid
+            ValueError: arg value was invalid
+            IOError: database I/O failed
+        """
+        if not isinstance(name, str):
+            raise TypeError(f"name is {type(name)}; expected str()")
+        if not isinstance(modules, str):
+            raise TypeError(f"modules is {type(modules)}; expected str()")
+        if not name:
+            raise ValueError("name is empty")
+
+        qry = "INSERT OR REPLACE INTO tbl_scan_profile (name, modules, created) VALUES (?, ?, ?)"
+        with self.dbhLock:
+            try:
+                self.dbh.execute(qry, (name, modules, time.time() * 1000))
+                self.conn.commit()
+            except sqlite3.Error as e:
+                raise IOError("SQL error encountered when saving scan profile") from e
+
+    def scanProfileDelete(self, name: str) -> None:
+        """Delete a custom scan profile.
+
+        Args:
+            name (str): profile name
+
+        Raises:
+            TypeError: arg type was invalid
+            IOError: database I/O failed
+        """
+        if not isinstance(name, str):
+            raise TypeError(f"name is {type(name)}; expected str()")
+
+        with self.dbhLock:
+            try:
+                self.dbh.execute("DELETE FROM tbl_scan_profile WHERE name = ?", (name,))
+                self.conn.commit()
+            except sqlite3.Error as e:
+                raise IOError("SQL error encountered when deleting scan profile") from e
 
     def scanResultHistory(self, instanceId: str) -> list:
         """History of data from the scan.

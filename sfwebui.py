@@ -924,10 +924,18 @@ class SpiderFootWebUi:
         """
         dbh = SpiderFootDb(self.config)
         types = dbh.eventTypes()
+        customprofiles = []
+        for row in dbh.scanProfileList():
+            try:
+                mods = json.loads(row[1])
+            except (ValueError, TypeError):
+                mods = []
+            customprofiles.append({'name': row[0], 'modules': mods})
         templ = Template(filename='spiderfoot/templates/newscan.tmpl', lookup=self.lookup)
         return templ.render(pageid='NEWSCAN', types=types, docroot=self.docroot,
                             modules=self.config['__modules__'], scanname="",
-                            selectedmods="", scantarget="", version=__version__)
+                            selectedmods="", scantarget="", customprofiles=customprofiles,
+                            version=__version__)
 
     @cherrypy.expose
     def clonescan(self: 'SpiderFootWebUi', id: str) -> str:
@@ -1316,6 +1324,75 @@ class SpiderFootWebUi:
             ret.append({'name': m, 'descr': self.config['__modules__'][m]['descr']})
 
         return ret
+
+    @cherrypy.expose
+    @cherrypy.tools.json_out()
+    def savedprofiles(self: 'SpiderFootWebUi') -> list:
+        """List saved custom scan profiles.
+
+        Returns:
+            list: profiles as [{name, modules: [..]}]
+        """
+        cherrypy.response.headers['Content-Type'] = "application/json; charset=utf-8"
+        dbh = SpiderFootDb(self.config)
+        ret = []
+        for row in dbh.scanProfileList():
+            try:
+                mods = json.loads(row[1])
+            except (ValueError, TypeError):
+                mods = []
+            ret.append({'name': row[0], 'modules': mods})
+        return ret
+
+    @cherrypy.expose
+    @cherrypy.tools.json_out()
+    def saveprofile(self: 'SpiderFootWebUi', name: str = None, modules: str = None) -> list:
+        """Create or update a custom scan profile.
+
+        Args:
+            name (str): profile name
+            modules (str): comma-separated list of module names
+
+        Returns:
+            list: ["SUCCESS", ""] or ["ERROR", msg]
+        """
+        cherrypy.response.headers['Content-Type'] = "application/json; charset=utf-8"
+        if not name or not name.strip():
+            return ["ERROR", "A profile name is required."]
+        if not modules:
+            return ["ERROR", "A profile must contain at least one module."]
+
+        modlist = [m.replace('module_', '').strip() for m in modules.split(',') if m.strip()]
+        if not modlist:
+            return ["ERROR", "A profile must contain at least one module."]
+
+        dbh = SpiderFootDb(self.config)
+        try:
+            dbh.scanProfileSet(name.strip(), json.dumps(modlist))
+        except Exception as e:
+            return ["ERROR", str(e)]
+        return ["SUCCESS", ""]
+
+    @cherrypy.expose
+    @cherrypy.tools.json_out()
+    def deleteprofile(self: 'SpiderFootWebUi', name: str = None) -> list:
+        """Delete a custom scan profile.
+
+        Args:
+            name (str): profile name
+
+        Returns:
+            list: ["SUCCESS", ""] or ["ERROR", msg]
+        """
+        cherrypy.response.headers['Content-Type'] = "application/json; charset=utf-8"
+        if not name:
+            return ["ERROR", "A profile name is required."]
+        dbh = SpiderFootDb(self.config)
+        try:
+            dbh.scanProfileDelete(name)
+        except Exception as e:
+            return ["ERROR", str(e)]
+        return ["SUCCESS", ""]
 
     @cherrypy.expose
     @cherrypy.tools.json_out()

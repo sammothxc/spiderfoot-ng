@@ -57,6 +57,7 @@
             <input type=hidden id='modulelist' name='modulelist' value=''>
             <input type=hidden id='typelist' name='typelist' value=''>
             <input type=hidden id='usecase' name='usecase' value=''>
+            <button type='button' id="btn-save-profile" class="btn btn-default">Save as profile</button>
             <button id="btn-run-scan" class="btn btn-danger">Run Scan Now</button>
         </div>
     </div>
@@ -86,10 +87,12 @@ for mid, m in modules.items():
     }
 # types rows: (descr/label, code, raw, type) - exclude the internal ROOT seed
 dt = sorted([[t[0], t[1]] for t in types if t[1] != 'ROOT'])
+custom = customprofiles if customprofiles is not UNDEFINED else []
 %>
 var MODULES = ${json.dumps(mod_data).replace('</', '<\\/') | n};
 var DATATYPES = ${json.dumps(dt).replace('</', '<\\/') | n};
 var PROFILES = ["All", "Footprint", "Investigate", "Passive"];
+var CUSTOM_PROFILES = ${json.dumps(custom).replace('</', '<\\/') | n};
 var PRESELECTED_MODS = "${selectedmods}";
 </script>
 <%include file="FOOTER.tmpl"/>

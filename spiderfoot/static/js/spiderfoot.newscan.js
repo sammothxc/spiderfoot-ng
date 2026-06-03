@@ -76,7 +76,68 @@ function renderProfiles() {
     PROFILES.forEach(function(p) {
         html += "<div class='ns-profile' data-profile='" + p + "'>" + p + "</div>";
     });
+    if (CUSTOM_PROFILES.length) {
+        html += "<div class='newscan-col-sub' style='padding-top:8px'>Custom</div>";
+        CUSTOM_PROFILES.forEach(function(p) {
+            html += "<div class='ns-profile ns-custom' data-custom='" + escapeHtml(p.name) + "'>"
+                  + "<span class='ns-custom-name'>" + escapeHtml(p.name) + "</span>"
+                  + "<a href='#' class='ns-del-profile' data-name='" + escapeHtml(p.name) + "' title='Delete profile'>&times;</a>"
+                  + "</div>";
+        });
+    }
     $("#profile-list").html(html);
+}
+
+function applyCustomProfile(name) {
+    var prof = null;
+    for (var i = 0; i < CUSTOM_PROFILES.length; i++) {
+        if (CUSTOM_PROFILES[i].name === name) prof = CUSTOM_PROFILES[i];
+    }
+    if (!prof) return;
+    selectedMods = {};
+    prof.modules.forEach(function(mid) { if (MODULES[mid]) selectedMods[mid] = true; });
+    $(".ns-data").prop("checked", false);
+    syncModuleChecks();
+}
+
+function saveProfile() {
+    var mods = Object.keys(selectedMods).filter(function(m) { return selectedMods[m] && MODULES[m]; });
+    if (mods.length === 0) {
+        alertify.error("Select some modules before saving a profile.");
+        return;
+    }
+    var name = window.prompt("Save this module selection as a profile named:");
+    if (!name || !name.trim()) return;
+    name = name.trim();
+    sf.fetchData(docroot + "/saveprofile",
+        { name: name, modules: mods.map(function(m) { return "module_" + m; }).join(",") },
+        function(ret) {
+            if (!ret || ret[0] !== "SUCCESS") {
+                alertify.error((ret && ret[1]) || "Failed to save profile.");
+                return;
+            }
+            CUSTOM_PROFILES = CUSTOM_PROFILES.filter(function(p) { return p.name !== name; });
+            CUSTOM_PROFILES.push({ name: name, modules: mods });
+            CUSTOM_PROFILES.sort(function(a, b) { return a.name < b.name ? -1 : (a.name > b.name ? 1 : 0); });
+            renderProfiles();
+            $(".ns-custom").each(function() {
+                if ($(this).attr("data-custom") === name) $(this).addClass("active");
+            });
+            alertify.success("Profile saved: " + name);
+        });
+}
+
+function deleteProfile(name) {
+    if (!window.confirm("Delete the profile \"" + name + "\"?")) return;
+    sf.fetchData(docroot + "/deleteprofile", { name: name }, function(ret) {
+        if (!ret || ret[0] !== "SUCCESS") {
+            alertify.error((ret && ret[1]) || "Failed to delete profile.");
+            return;
+        }
+        CUSTOM_PROFILES = CUSTOM_PROFILES.filter(function(p) { return p.name !== name; });
+        renderProfiles();
+        alertify.success("Profile deleted: " + name);
+    });
 }
 
 function renderDataTypes() {
@@ -226,8 +287,23 @@ $(document).ready(function() {
         applyProfile("All");
     }
 
-    $("#profile-list").on("click", ".ns-profile", function() {
+    $("#profile-list").on("click", ".ns-profile[data-profile]", function() {
         applyProfile($(this).attr("data-profile"));
+    });
+    $("#profile-list").on("click", ".ns-custom", function(e) {
+        if ($(e.target).hasClass("ns-del-profile")) return;
+        $(".ns-profile").removeClass("active");
+        $(this).addClass("active");
+        applyCustomProfile($(this).attr("data-custom"));
+    });
+    $("#profile-list").on("click", ".ns-del-profile", function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        deleteProfile($(this).attr("data-name"));
+    });
+    $("#btn-save-profile").on("click", function(e) {
+        e.preventDefault();
+        saveProfile();
     });
     $("#datatype-list").on("change", ".ns-data", function() {
         applyDataTypes();
