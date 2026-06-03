@@ -698,7 +698,9 @@
                 counts[t] = (counts[t] || 0) + 1;
             });
             var sorted = Object.keys(counts).sort();
-            var html = "<div class='legend-title'>Node types</div>";
+            var total = 0;
+            sorted.forEach(function(t) { total += counts[t]; });
+            var html = "<div class='legend-title'>Node types<span class='legend-total'>" + total + "</span></div>";
             for (var i = 0; i < sorted.length; i++) {
                 var t = sorted[i];
                 var off = cyOffTypes[t] ? " off" : "";

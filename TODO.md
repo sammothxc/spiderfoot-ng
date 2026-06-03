@@ -1,5 +1,4 @@
 # TODO
-feat: total node count
 fix: tooltip node types in panel
 feat: highlighting a node also traces route to target 
 feat: hold shift to select multiple nodes

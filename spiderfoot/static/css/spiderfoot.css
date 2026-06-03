@@ -78,6 +78,11 @@ table pre {
   margin-bottom: 4px;
 }
 
+.graph-legend .legend-title .legend-total {
+  float: right;
+  color: #555;
+}
+
 .graph-legend .legend-item {
   display: flex;
   align-items: center;
