@@ -1,5 +1,7 @@
 # TODO
-- fix: update README for pypi package, badge
-- fix: shorten tri-column on new scan page
-- feat: shodan module
-- feat: hudson rock module
+
+fix: space nodes out more
+fix: hide parent, and then unhide child
+fix: reset view is too zoomed out
+feat: shodan module
+feat: hudson rock modulee

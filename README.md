@@ -1,11 +1,12 @@
 # spiderfoot-ng
 
+[![PyPI](https://img.shields.io/pypi/v/spiderfoot-ng)](https://pypi.org/project/spiderfoot-ng/)
+[![Python Versions](https://img.shields.io/pypi/pyversions/spiderfoot-ng)](https://pypi.org/project/spiderfoot-ng/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Python Version](https://img.shields.io/badge/python-3.10+-green)](https://www.python.org)
-[![Last Commit](https://img.shields.io/github/last-commit/sammothxc/spiderfoot-ng)](https://github.com/sammothxc/spiderfoot-ng/commits/master)
-[![CodeQL](https://github.com/sammothxc/spiderfoot-ng/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/sammothxc/spiderfoot-ng/actions/workflows/codeql-analysis.yml)
 [![Tests](https://github.com/sammothxc/spiderfoot-ng/actions/workflows/tests.yaml/badge.svg)](https://github.com/sammothxc/spiderfoot-ng/actions/workflows/tests.yaml)
 [![Docker](https://github.com/sammothxc/spiderfoot-ng/actions/workflows/docker-publish.yml/badge.svg)](https://github.com/sammothxc/spiderfoot-ng/actions/workflows/docker-publish.yml)
+[![CodeQL](https://github.com/sammothxc/spiderfoot-ng/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/sammothxc/spiderfoot-ng/actions/workflows/codeql-analysis.yml)
+[![Last Commit](https://img.shields.io/github/last-commit/sammothxc/spiderfoot-ng)](https://github.com/sammothxc/spiderfoot-ng/commits/master)
 
 **spiderfoot-ng** is an open-source intelligence (OSINT) automation tool. It integrates with hundreds of data sources and combines them with analysis modules to make the resulting data easy to navigate.
 
@@ -83,7 +84,14 @@ The 200+ modules feed each other in a publisher/subscriber model to do things li
 
 ### Python Package (easiest)
 
+Install from PyPI with [pipx](https://pipx.pypa.io/) (recommended; keeps it in its own isolated environment):
 
+```sh
+pipx install spiderfoot-ng
+spiderfoot-ng -l 127.0.0.1:5001
+```
+
+Then open `http://localhost:5001`. Plain `pip install spiderfoot-ng` works too (ideally inside a virtualenv). Requires Python 3.10 or newer.
 
 ### Docker (recommended)
 
