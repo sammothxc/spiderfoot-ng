@@ -113,6 +113,8 @@ def main() -> None:
     p.add_argument("-q", action='store_true', help="Disable logging. This will also hide errors!")
     p.add_argument("-V", "--version", action='store_true', help="Display the version of spiderfoot-ng and exit.")
     p.add_argument("-max-threads", type=int, help="Max number of modules to run concurrently.")
+    p.add_argument("--user", metavar="USERNAME", type=str, help="Username for web UI login (default: admin). Use with --pass.")
+    p.add_argument("--pass", dest="passwd", metavar="PASSWORD", type=str, help="Password to require for the web UI. For Docker, prefer the SPIDERFOOT_PASSWORD env var so the password isn't exposed in the process list.")
     args = p.parse_args()
 
     if args.version:
@@ -225,6 +227,10 @@ def main() -> None:
 
         sfWebUiConfig['host'] = host
         sfWebUiConfig['port'] = port
+        if args.user:
+            sfWebUiConfig['user'] = args.user
+        if args.passwd:
+            sfWebUiConfig['passwd'] = args.passwd
 
         start_web_server(sfWebUiConfig, sfConfig, loggingQueue)
         sys.exit(0)
@@ -521,8 +527,18 @@ def start_web_server(sfWebUiConfig: dict, sfConfig: dict, loggingQueue=None) -> 
 
             secrets[u] = p
 
+    # Credentials from the environment (convenient for Docker / compose).
+    env_pass = os.environ.get('SPIDERFOOT_PASSWORD')
+    if env_pass:
+        secrets[os.environ.get('SPIDERFOOT_USER') or 'admin'] = env_pass
+
+    # Credentials from the command line (--user/--pass), passed via the web config.
+    cli_pass = sfWebUiConfig.get('passwd')
+    if cli_pass:
+        secrets[sfWebUiConfig.get('user') or 'admin'] = cli_pass
+
     if secrets:
-        log.info("Enabling authentication based on supplied passwd file.")
+        log.info("Enabling authentication for the web interface.")
         conf['/'] = {
             'tools.auth_digest.on': True,
             'tools.auth_digest.realm': web_host,
@@ -531,9 +547,13 @@ def start_web_server(sfWebUiConfig: dict, sfConfig: dict, loggingQueue=None) -> 
         }
     else:
         warn_msg = "\n********************************************************************\n"
-        warn_msg += "Warning: passwd file contains no passwords. Authentication disabled.\n"
-        warn_msg += "Please consider adding authentication to protect this instance!\n"
-        warn_msg += "Refer to https://www.spiderfoot.net/documentation/#security.\n"
+        warn_msg += "Warning: authentication is DISABLED. Anyone who can reach this\n"
+        warn_msg += "server can run scans and read their results.\n"
+        warn_msg += "Enable a login with any of:\n"
+        warn_msg += "  - the SPIDERFOOT_PASSWORD env var (recommended for Docker)\n"
+        warn_msg += "  - the --pass option (with optional --user)\n"
+        warn_msg += f"  - a 'username:password' file at {passwd_file}\n"
+        warn_msg += "then restart. See: https://github.com/sammothxc/spiderfoot-ng#security\n"
         warn_msg += "********************************************************************\n"
         log.warning(warn_msg)
 

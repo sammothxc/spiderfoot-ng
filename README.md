@@ -116,6 +116,28 @@ python3 ./sf.py -l 127.0.0.1:5001
 
 Requires Python 3.10 or newer.
 
+## Security
+
+By default the web UI has no authentication; anyone who can reach the
+host/port can run scans and read results. 
+
+To require a login, enable HTTP authentication any of these ways:
+
+- Environment variable (recommended for Docker): set `SPIDERFOOT_PASSWORD`
+  (and optionally `SPIDERFOOT_USER`, default `admin`).
+
+  ```sh
+  docker run -p 5001:5001 -e SPIDERFOOT_USER=admin -e SPIDERFOOT_PASSWORD=changeme \
+    -v ./data:/var/lib/spiderfoot ghcr.io/sammothxc/spiderfoot-ng:latest
+  ```
+
+- Command line: `--pass <password>` (and optionally `--user <username>`).
+  Prefer the env var where possible, a CLI password can be visible in the
+  process list.
+
+- Password file: create `~/.spiderfoot/passwd` with one or more
+  `username:password` lines (supports multiple users).
+
 ## Releasing
 
 The version number lives in `spiderfoot/__version__.py` (canonical) and is mirrored
