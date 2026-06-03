@@ -1,50 +1,228 @@
-    tabs = [ "use", "type", "module" ];
-    activeTab = "use";
+// New Scan page: reactive tri-column selection (Profiles / Required Data / Modules).
+//
+// The Module column is the single source of truth (what actually runs). The
+// Profiles and Required Data columns are independent "drivers" that set the
+// module selection; manual module tweaks then refine it. Built-in profiles are
+// templates, not constraints — nothing is ever blocked, only flagged.
 
-    function submitForm() {
-        list = "";
-        $("[id^="+activeTab+"_]").each(function() {
-            if ($(this).is(":checked")) {
-                list += $(this).attr('id') + ",";
-            }
+var selectedMods = {};   // module id -> true when enabled (the source of truth)
+
+function escapeHtml(s) {
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+// --- Dependency resolution (ported from sflib modulesProducing + closure) ---
+
+// Modules whose produced events intersect the requested types ('*' = any).
+function modulesProducing(types) {
+    var set = {};
+    var star = types.indexOf('*') >= 0;
+    for (var mid in MODULES) {
+        var prov = MODULES[mid].provides || [];
+        if (!prov.length) continue;
+        if (star) { set[mid] = true; continue; }
+        for (var i = 0; i < prov.length; i++) {
+            if (types.indexOf(prov[i]) >= 0) { set[mid] = true; break; }
+        }
+    }
+    return set;
+}
+
+// Full module set needed to gather the requested data types: the modules that
+// produce them, plus (recursively) the modules that feed what those consume.
+function resolveFromDataTypes(types) {
+    if (!types.length) return {};
+    var modset = modulesProducing(types);
+    var frontier = Object.keys(modset);
+    while (frontier.length) {
+        var consumed = {};
+        frontier.forEach(function(mid) {
+            (MODULES[mid].consumes || []).forEach(function(t) { consumed[t] = true; });
         });
+        var producers = modulesProducing(Object.keys(consumed));
+        var next = [];
+        for (var mid in producers) {
+            if (!modset[mid]) { modset[mid] = true; next.push(mid); }
+        }
+        frontier = next;
+    }
+    return modset;
+}
 
-        $("#"+activeTab+"list").val(list);
-        for (i = 0; i < tabs.length; tabs++) {
-            if (tabs[i] != activeTab) {
-                $("#"+tabs[i]+"list").val("");
-            }
+// --- Rendering ---
+
+function moduleBadges(mid) {
+    var m = MODULES[mid];
+    var b = "";
+    if (m.needsKey) {
+        var cls = m.keyConfigured ? "ns-key-ok" : "ns-key-missing";
+        var t = m.keyConfigured ? "API key configured" : "API key required (not configured)";
+        b += " <span class='ns-badge " + cls + "' title='" + t + "'><i class='glyphicon glyphicon-lock'></i></span>";
+    }
+    (m.flags || []).forEach(function(f) {
+        if (f === "apikey") return;
+        if (f === "invasive") b += " <span class='ns-badge ns-invasive' title='Touches the target directly'>invasive</span>";
+        else if (f === "slow") b += " <span class='ns-badge ns-slow' title='Slow to run'>slow</span>";
+        else if (f === "tool") b += " <span class='ns-badge ns-tool' title='Needs an external CLI tool installed'>tool</span>";
+        else if (f === "tor") b += " <span class='ns-badge ns-tor' title='Routes via TOR'>tor</span>";
+        else if (f === "errorprone") b += " <span class='ns-badge ns-flaky' title='May be error-prone'>flaky</span>";
+    });
+    return b;
+}
+
+function renderProfiles() {
+    var html = "";
+    PROFILES.forEach(function(p) {
+        html += "<div class='ns-profile' data-profile='" + p + "'>" + p + "</div>";
+    });
+    $("#profile-list").html(html);
+}
+
+function renderDataTypes() {
+    var html = "";
+    DATATYPES.forEach(function(d) {
+        // d = [label, code]
+        html += "<label class='ns-item' data-search='" + escapeHtml((d[0] + " " + d[1]).toLowerCase()) + "'>"
+              + "<input type='checkbox' class='ns-data' data-code='" + escapeHtml(d[1]) + "'> "
+              + "<span class='ns-name'>" + escapeHtml(d[0]) + "</span></label>";
+    });
+    $("#datatype-list").html(html);
+}
+
+function renderModules() {
+    var ids = Object.keys(MODULES).sort(function(a, b) {
+        var an = MODULES[a].name.toUpperCase(), bn = MODULES[b].name.toUpperCase();
+        return an < bn ? -1 : (an > bn ? 1 : 0);
+    });
+    var html = "";
+    ids.forEach(function(mid) {
+        var m = MODULES[mid];
+        html += "<label class='ns-item' data-mid='" + mid + "' data-search='" + escapeHtml((m.name + " " + mid).toLowerCase()) + "' title='" + escapeHtml(m.descr) + "'>"
+              + "<input type='checkbox' class='ns-mod' data-mid='" + mid + "'> "
+              + "<span class='ns-name'>" + escapeHtml(m.name) + "</span>" + moduleBadges(mid) + "</label>";
+    });
+    $("#module-list").html(html);
+    syncModuleChecks();
+}
+
+// Push the selectedMods state into the rendered module checkboxes.
+function syncModuleChecks() {
+    $(".ns-mod").each(function() {
+        var mid = $(this).attr("data-mid");
+        this.checked = !!selectedMods[mid];
+    });
+    updateSummary();
+}
+
+// --- Selection drivers ---
+
+function applyProfile(name) {
+    selectedMods = {};
+    for (var mid in MODULES) {
+        if (name === "All" || (MODULES[mid].group || []).indexOf(name) >= 0) {
+            selectedMods[mid] = true;
         }
     }
+    // Profile is now the active driver; clear the data-type selection display.
+    $(".ns-data").prop("checked", false);
+    $(".ns-profile").removeClass("active");
+    $(".ns-profile[data-profile='" + name + "']").addClass("active");
+    syncModuleChecks();
+}
 
-    function switchTab(tabname) {
-        $("#"+activeTab+"table").hide();
-        $("#"+activeTab+"tab").removeClass("active");
-        $("#"+tabname+"table").show();
-        $("#"+tabname+"tab").addClass("active");
-        activeTab = tabname;
-        if (activeTab == "use") {
-            $("#selectors").hide();
-        } else {
-            $("#selectors").show();
-        }
-    }
+function applyDataTypes() {
+    var types = [];
+    $(".ns-data:checked").each(function() { types.push($(this).attr("data-code")); });
+    selectedMods = resolveFromDataTypes(types);
+    // Data is now the active driver; clear the profile highlight.
+    $(".ns-profile").removeClass("active");
+    syncModuleChecks();
+}
 
-    function selectAll() {
-        $("[id^="+activeTab+"_]").prop("checked", true);
-    }
+function onModuleToggle(mid, checked) {
+    if (checked) selectedMods[mid] = true;
+    else delete selectedMods[mid];
+    // A manual tweak means we've deviated from any pristine profile.
+    $(".ns-profile").removeClass("active");
+    updateSummary();
+}
 
-    function deselectAll() {
-        $("[id^="+activeTab+"_]").prop("checked", false);
+// --- Summary ---
+
+function updateSummary() {
+    var mods = Object.keys(selectedMods).filter(function(m) { return selectedMods[m] && MODULES[m]; });
+    var dataTypes = {}, needKey = 0, unconfigured = 0, invasive = 0;
+    mods.forEach(function(mid) {
+        var m = MODULES[mid];
+        (m.provides || []).forEach(function(t) { dataTypes[t] = true; });
+        if (m.needsKey) { needKey++; if (!m.keyConfigured) unconfigured++; }
+        if ((m.flags || []).indexOf("invasive") >= 0) invasive++;
+    });
+    var total = Object.keys(MODULES).length;
+    var html = "Will collect <b>" + Object.keys(dataTypes).length + "</b> data types &middot; "
+             + "<b>" + mods.length + "</b> of " + total + " modules &middot; "
+             + "<b>" + needKey + "</b> need API keys";
+    if (unconfigured > 0) html += " <span class='text-danger'>(" + unconfigured + " unconfigured)</span>";
+    if (invasive > 0) html += " &middot; <span class='text-danger'>" + invasive + " invasive</span>";
+    $("#scan-summary").html(html);
+    $("#module-count").text("(" + mods.length + " selected)");
+}
+
+// --- Filters ---
+
+function applyFilter(inputId, listId) {
+    var q = $(inputId).val().toLowerCase();
+    $(listId + " .ns-item").each(function() {
+        var hay = $(this).attr("data-search") || "";
+        $(this).toggle(hay.indexOf(q) >= 0);
+    });
+}
+
+// --- Submit ---
+
+function submitForm() {
+    var mods = Object.keys(selectedMods).filter(function(m) { return selectedMods[m] && MODULES[m]; });
+    if (mods.length === 0) {
+        alertify.error("Select at least one module (pick a profile, some data, or modules directly).");
+        return false;
     }
+    $("#modulelist").val(mods.map(function(m) { return "module_" + m; }).join(","));
+    $("#typelist").val("");
+    $("#usecase").val("");
+    return true;
+}
 
 $(document).ready(function() {
-    $("#usetab").click(function() { switchTab("use"); });
-    $("#typetab").click(function() { switchTab("type"); });
-    $("#moduletab").click(function() { switchTab("module"); });
-    $("#btn-select-all").click(function() { selectAll(); });
-    $("#btn-deselect-all").click(function() { deselectAll(); });
-    $("#btn-run-scan").click(function() { submitForm(); });
+    renderProfiles();
+    renderDataTypes();
+    renderModules();
 
-    $('#scantarget').popover({ 'html': true, 'animation': true, 'trigger': 'focus'});
+    // Initial state: a re-run/clone pre-selects modules, otherwise default to All.
+    if (PRESELECTED_MODS && PRESELECTED_MODS !== "") {
+        selectedMods = {};
+        PRESELECTED_MODS.split(",").forEach(function(m) {
+            m = m.replace("module_", "").trim();
+            if (m && MODULES[m]) selectedMods[m] = true;
+        });
+        syncModuleChecks();
+    } else {
+        applyProfile("All");
+    }
+
+    $("#profile-list").on("click", ".ns-profile", function() {
+        applyProfile($(this).attr("data-profile"));
+    });
+    $("#datatype-list").on("change", ".ns-data", function() {
+        applyDataTypes();
+    });
+    $("#module-list").on("change", ".ns-mod", function() {
+        onModuleToggle($(this).attr("data-mid"), this.checked);
+    });
+    $("#module-filter").on("keyup", function() { applyFilter("#module-filter", "#module-list"); });
+    $("#datatype-filter").on("keyup", function() { applyFilter("#datatype-filter", "#datatype-list"); });
+
+    $("form").on("submit", function() { return submitForm(); });
+
+    $('#scantarget').popover({ 'html': true, 'animation': true, 'trigger': 'focus' });
 });

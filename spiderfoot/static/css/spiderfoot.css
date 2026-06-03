@@ -300,3 +300,121 @@ input:checked + .slider:before {
 .download-button {
   padding: 6px 12px !important;
 }
+
+/* New Scan tri-column selector */
+.newscan-columns {
+  display: flex;
+  gap: 10px;
+  align-items: stretch;
+}
+
+.newscan-col {
+  flex: 1 1 0;
+  min-width: 0;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+}
+
+.newscan-col-head {
+  font-weight: bold;
+  padding: 8px 10px 2px;
+}
+
+.newscan-col-sub {
+  font-size: 11px;
+  color: #999;
+  padding: 0 10px 8px;
+}
+
+.newscan-filter {
+  margin: 0 10px 8px;
+  width: calc(100% - 20px);
+}
+
+.newscan-col-body {
+  overflow-y: auto;
+  height: calc(100vh - 380px);
+  min-height: 320px;
+  padding: 0 6px 6px;
+}
+
+.newscan-col-body .ns-item {
+  display: block;
+  font-weight: normal;
+  margin: 0;
+  padding: 3px 6px;
+  border-radius: 3px;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.newscan-col-body .ns-item:hover {
+  background: #f2f7fb;
+}
+
+.newscan-col-body .ns-item input {
+  margin-right: 4px;
+}
+
+.ns-profile {
+  padding: 10px 12px;
+  margin: 4px 6px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.ns-profile:hover {
+  background: #f2f7fb;
+}
+
+.ns-profile.active {
+  background: #3a87ad;
+  border-color: #3a87ad;
+  color: #fff;
+}
+
+.ns-badge {
+  font-size: 10px;
+  padding: 0 4px;
+  border-radius: 3px;
+  background: #eee;
+  color: #777;
+}
+
+.ns-badge.ns-invasive {
+  background: #f2dede;
+  color: #a94442;
+  font-weight: bold;
+}
+
+.ns-badge.ns-slow,
+.ns-badge.ns-tool,
+.ns-badge.ns-tor,
+.ns-badge.ns-flaky {
+  background: #fcf8e3;
+  color: #8a6d3b;
+}
+
+.ns-key-ok {
+  color: #3c763d;
+}
+
+.ns-key-missing {
+  color: #a94442;
+}
+
+.newscan-summary {
+  margin-top: 10px;
+  padding: 8px 12px;
+  background: #f7f7f7;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 13px;
+}
