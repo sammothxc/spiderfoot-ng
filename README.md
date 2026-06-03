@@ -12,24 +12,28 @@
 It has an embedded web server with a clean, intuitive web UI, and can also be driven entirely from the command line. It's written in **Python 3** and **MIT-licensed**.
 
 > **About this fork**
-> spiderfoot-ng is a me-maintained fork of [smicallef/spiderfoot](https://github.com/smicallef/spiderfoot), focused on keeping the project alive with up-to-date dependencies and modern container delivery. It deliberately ships a single slim Docker image rather than the bundled "full" image, see [A note on the Docker image](#a-note-on-the-docker-image) below.
+> spiderfoot-ng is a fork of [smicallef/spiderfoot](https://github.com/smicallef/spiderfoot), focused on keeping the project alive with up-to-date dependencies and modern container delivery. It deliberately ships a single slim Docker image rather than the bundled "full" image, see [A note on the Docker image](#a-note-on-the-docker-image) below. Parts of this fork were built with the help of AI. AI wrote a fair share of the code, and I read all of it. If something breaks, blame AI. If it works, blame AI.
 
-> AI disclaimer
-> Parts of this fork were built with the help of AI. AI wrote a fair share of the code, and I read all of it. If something breaks, blame AI. If it works, blame AI.
+## What's New in spiderfoot-ng
+
+Improvements this fork adds on top of upstream SpiderFoot:
+
+- Redesigned New Scan page: a reactive tri-column view (Profiles · Required Data · Modules) that shows exactly which modules will run and what data they'll collect *before* you start. Selecting a profile or the data you care about checks the right modules live, with inline flags for modules that are invasive, slow, or need an API key. Built-in profiles are starting templates you can fine-tune freely.
+- Saved custom scan profiles: save any module selection as a named profile and reuse it, listed right alongside the built-in ones.
+- Modern interactive network graph: a live-updating, colour-coded force graph (Cytoscape) that streams in new nodes as a scan runs. Click to highlight a node's connections and copy its value; filter or hide whole event types; hidden connectors stay greyed so the structure is preserved.
+- Scan timing: a live elapsed/duration timer on the scan view, plus a sortable Duration column on the scan list.
+- Modernized stack: runs on Python 3.10–3.13 with updated dependencies, and ships as a single slim Docker image (no bundled "full" image upsell, also no marketing footer).
 
 ## Features
 
 - Web-based UI or CLI
 - Over 200 modules (see the [modules table](#modules--integrations) below)
-- Python 3.10+
 - YAML-configurable [correlation engine](/correlations/README.md) with [37 pre-defined rules](/correlations)
 - CSV / JSON / GEXF export
 - API key export/import
 - SQLite back-end for custom querying
 - Highly configurable
-- Interactive network-graph visualisation that updates live as a scan runs
 - TOR integration for dark web searching
-- Single slim Docker image published to `ghcr.io/sammothxc/spiderfoot-ng`
 - Can call other CLI tools like DNSTwist, WhatWeb, Nmap, and CMSeeK if installed on the host
 
 ## A Note on the Docker Image
@@ -397,3 +401,4 @@ Pull requests, issues, and module additions are welcome. If you're fixing a bug 
 ## License
 
 MIT; see [LICENSE](LICENSE). spiderfoot-ng is a fork of [smicallef/spiderfoot](https://github.com/smicallef/spiderfoot); the original copyright is preserved per the MIT terms.
+
