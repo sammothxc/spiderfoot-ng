@@ -84,7 +84,7 @@ function renderDataTypes() {
     DATATYPES.forEach(function(d) {
         // d = [label, code]
         html += "<label class='ns-item' data-search='" + escapeHtml((d[0] + " " + d[1]).toLowerCase()) + "'>"
-              + "<input type='checkbox' class='ns-data' data-code='" + escapeHtml(d[1]) + "'> "
+              + "<input type='checkbox' class='ns-data' id='type_" + escapeHtml(d[1]) + "' data-code='" + escapeHtml(d[1]) + "'> "
               + "<span class='ns-name'>" + escapeHtml(d[0]) + "</span></label>";
     });
     $("#datatype-list").html(html);
@@ -99,7 +99,7 @@ function renderModules() {
     ids.forEach(function(mid) {
         var m = MODULES[mid];
         html += "<label class='ns-item' data-mid='" + mid + "' data-search='" + escapeHtml((m.name + " " + mid).toLowerCase()) + "' title='" + escapeHtml(m.descr) + "'>"
-              + "<input type='checkbox' class='ns-mod' data-mid='" + mid + "'> "
+              + "<input type='checkbox' class='ns-mod' id='module_" + mid + "' data-mid='" + mid + "'> "
               + "<span class='ns-name'>" + escapeHtml(m.name) + "</span>" + moduleBadges(mid) + "</label>";
     });
     $("#module-list").html(html);

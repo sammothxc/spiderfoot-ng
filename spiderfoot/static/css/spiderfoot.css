@@ -329,9 +329,12 @@ input:checked + .slider:before {
   padding: 0 10px 8px;
 }
 
-.newscan-filter {
-  margin: 0 10px 8px;
-  width: calc(100% - 20px);
+.newscan-filter-wrap {
+  padding: 0 10px 8px;
+}
+
+.newscan-filter-wrap .form-control {
+  box-sizing: border-box;
 }
 
 .newscan-col-body {
@@ -417,4 +420,12 @@ input:checked + .slider:before {
   border: 1px solid #ddd;
   border-radius: 4px;
   font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.newscan-summary #scan-summary {
+  flex: 1 1 auto;
 }

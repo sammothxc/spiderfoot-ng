@@ -2,7 +2,7 @@
 <script src="${docroot}/static/js/spiderfoot.newscan.js"></script>
 <h2>New Scan</h2>
 <div style='padding-top: 20px'>
-<form class="form" action='${docroot}/startscan' method='POST'>
+<form class="form" action='${docroot}/startscan' method='POST' autocomplete='off'>
 <div class='col-sm-3' style='padding: 0'>
     <label for="scanname">Scan Name</label>
     <div class="input-group" style='padding-bottom: 10px'>
@@ -42,20 +42,18 @@
             <div class='newscan-col'>
                 <div class='newscan-col-head'>Required Data</div>
                 <div class='newscan-col-sub'>Pick what you want to find; modules are chosen for you.</div>
-                <input type='text' class='form-control input-sm newscan-filter' id='datatype-filter' placeholder='Filter data types...'>
+                <div class='newscan-filter-wrap'><input type='text' class='form-control input-sm' id='datatype-filter' placeholder='Filter data types...'></div>
                 <div class='newscan-col-body' id='datatype-list'></div>
             </div>
             <div class='newscan-col'>
                 <div class='newscan-col-head'>Modules <small class='text-muted' id='module-count'></small></div>
                 <div class='newscan-col-sub'>What will actually run. Tweak freely.</div>
-                <input type='text' class='form-control input-sm newscan-filter' id='module-filter' placeholder='Filter modules...'>
+                <div class='newscan-filter-wrap'><input type='text' class='form-control input-sm' id='module-filter' placeholder='Filter modules...'></div>
                 <div class='newscan-col-body' id='module-list'></div>
             </div>
         </div>
-        <div class='newscan-summary' id='scan-summary'></div>
-    </div>
-    <div class="control-group">
-        <div class="controls">
+        <div class='newscan-summary'>
+            <span id='scan-summary'></span>
             <input type=hidden id='modulelist' name='modulelist' value=''>
             <input type=hidden id='typelist' name='typelist' value=''>
             <input type=hidden id='usecase' name='usecase' value=''>
