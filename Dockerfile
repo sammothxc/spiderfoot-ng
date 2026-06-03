@@ -61,7 +61,7 @@ ENV SPIDERFOOT_CACHE /var/lib/spiderfoot/cache
 RUN apk --update --no-cache add python3 musl openssl libxslt tinyxml libxml2 jpeg zlib openjpeg \
     && addgroup spiderfoot \
     && adduser -G spiderfoot -h /home/spiderfoot -s /sbin/nologin \
-               -g "SpiderFoot User" -D spiderfoot \
+               -g "spiderfoot-ng User" -D spiderfoot \
     && rm -rf /var/cache/apk/* \
     && rm -rf /lib/apk/db \
     && rm -rf /root/.cache \

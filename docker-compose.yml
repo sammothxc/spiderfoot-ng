@@ -1,29 +1,12 @@
-version: "3"
-
-# Basic usage:
-#     $ docker-compose up
-#
-# Dev environment (code directory mapped into container):
-#     $ docker-compose -f docker-compose.yml -f docker-compose-dev.yml up
-#
-# Spiderfoot data resides in a Docker volume
-#
-#     $ ls -lh /var/lib/docker/volumes/spiderfoot_spiderfoot-data/_data
-#       total 104K
-#       drwxr-xr-x 2 user user 4.0K Sep 22 09:51 cache
-#       -rw-r--r-- 1 user user 100K Sep 22 15:19 spiderfoot.db
-
 services:
-  spiderfoot:
-    build:
-      context: ./
-    volumes:
-      - spiderfoot-data:/var/lib/spiderfoot
-    image: spiderfoot
-    container_name: spiderfoot
-    ports:
-      - "5001:5001"
+  spiderfoot-ng:
+    container_name: spiderfoot-ng
+    image: ghcr.io/sammothxc/spiderfoot-ng
     restart: unless-stopped
+    ports:
+      - 5001:5001
+    volumes:
+      - spiderfoot-ng:/var/lib/spiderfoot
 
 volumes:
-  spiderfoot-data:
+  spiderfoot-ng:

@@ -6,15 +6,41 @@ on:
   pull_request:
     branches: [master]
 
-jobs:
-  build:
+# Cancel any in-progress run for the same branch/PR when a new push arrives.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          # Linting is Python-version independent, so it runs once. Pinned to
+          # 3.13 because some flake8 plugins (e.g. flake8-return) are unmaintained
+          # and not yet compatible with Python 3.14.
+          python-version: "3.13"
+      - name: Install lint tooling
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r test/lint-requirements.txt
+      - name: Lint with flake8
+        run: |
+          # stop the build if there are Python Flake8 violations
+          flake8 . --count --show-source --statistics
+
+  test:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 10
     strategy:
-      fail-fast: false
+      # Cancel the remaining matrix jobs as soon as one fails.
+      fail-fast: true
       matrix:
-        python-version: ["3.10", "3.11", "3.12", "3.13"]
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
         os: [ubuntu-latest, macos-latest]
 
     steps:
@@ -27,10 +53,6 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r test/requirements.txt
-      - name: Lint with flake8
-        run: |
-          # stop the build if there are Python Flake8 violations
-          flake8 . --count --show-source --statistics
       - name: Test with pytest
         run: |
           # Hermetic run: block all network (any stray live call fails fast
