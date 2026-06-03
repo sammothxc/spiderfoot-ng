@@ -452,15 +452,19 @@
             });
         }
 
-        // Fade everything except the clicked node and its direct neighbours, and
-        // Fade everything except the clicked node and its neighbourhood, and pin
-        // only the clicked node's label. Neighbours' labels appear on hover.
+        // Fade everything except the clicked node, its neighbourhood, and the
+        // chain of edges/nodes tracing back to the scan target — so you can see
+        // at a glance how this node connects to the root. Pin only the clicked
+        // node's label; neighbours' labels appear on hover.
         function cyHighlightNeighbors(node) {
             if (!sharedCy) return;
             sharedCy.elements().addClass('faded');
             sharedCy.nodes().removeClass('showlabel pinlabel');
-            var hood = node.closedNeighborhood();
-            hood.removeClass('faded').addClass('highlighted');
+            // Direct neighbourhood plus the full ancestor path back to the
+            // target. Edges point parent -> child, so predecessors() walks up
+            // toward the root and includes the connecting edges.
+            var route = node.closedNeighborhood().union(node.predecessors());
+            route.removeClass('faded').addClass('highlighted');
             node.addClass('pinlabel');
         }
 
